@@ -1,0 +1,110 @@
+# Packaging Rule Definitions for Smart Food Packaging Recommendation System
+# Declarative criteria for filtering candidate materials and setting barrier requirements
+
+rules:
+  - id: R001_HIGH_FAT_OXIDATION
+    name: High Fat Oxidation Protection
+    description: "Foods with high lipid content and oxygen sensitivity require strong oxygen barrier to prevent rancidity."
+    condition:
+      field: fat
+      operator: ">="
+      value: 15.0
+      and_field: oxygen_sensitivity
+      and_operator: "in"
+      and_value: ["Medium", "High"]
+    action: REQUIRE_BARRIER
+    constraints:
+      max_otr: 50.0  # cc/(m²·day·atm)
+      min_oxygen_barrier_rank: 2  # 0=Poor, 1=Moderate, 2=Good, 3=Excellent
+    explanation: "High fat content (>= 15%) combined with oxygen sensitivity accelerates lipid auto-oxidation; packaging must provide a stringent oxygen barrier (OTR <= 50 cc/(m²·day·atm))."
+
+  - id: R002_HIGH_MOISTURE_SENSITIVITY
+    name: Critical Moisture Loss / Uptake Protection
+    description: "Foods highly sensitive to moisture require low water vapor transmission."
+    condition:
+      field: moisture_sensitivity
+      operator: "=="
+      value: "High"
+    action: REQUIRE_BARRIER
+    constraints:
+      max_wvtr: 5.0  # g/(m²·day)
+      min_moisture_barrier_rank: 2  # Good or Excellent
+    explanation: "High moisture sensitivity demands a superior water vapor barrier (WVTR <= 5.0 g/(m²·day)) to prevent hygroscopic clumping, crispness loss, or microbial proliferation."
+
+  - id: R003_HIGH_OXYGEN_SENSITIVITY
+    name: Strict Oxygen Sensitivity Restriction
+    description: "Commodities with high oxygen degradation require stringent gas barriers."
+    condition:
+      field: oxygen_sensitivity
+      operator: "=="
+      value: "High"
+    action: REQUIRE_BARRIER
+    constraints:
+      max_otr: 25.0
+      min_oxygen_barrier_rank: 2
+    explanation: "Product has high oxygen sensitivity; materials with high gas permeability (e.g. standard LDPE/paper) are disqualified unless combined with barrier layers."
+
+  - id: R004_PRODUCE_RESPIRATION_VENTILATION
+    name: Fresh Produce Respiration Gas Exchange
+    description: "Active living produce requires gas permeability or perforation to prevent anaerobic fermentation."
+    condition:
+      field: category
+      operator: "=="
+      value: "Produce"
+      and_field: respiration_rate
+      and_operator: "in"
+      and_value: ["Moderate", "High", "Very High"]
+    action: REQUIRE_PERMEABILITY
+    constraints:
+      min_otr: 150.0  # Avoid hermetic barrier films that trigger anaerobic decay
+      allow_controlled_permeability: true
+    explanation: "Active produce respiration produces CO2 and consumes O2; hermetic zero-permeability packaging causes anaerobic respiration, ethanol accumulation, and tissue breakdown."
+
+  - id: R005_EXTENDED_SHELF_LIFE
+    name: Extended Shelf-Life Barrier Rigor
+    description: "Products with long shelf life (> 180 days) mandate low permeability to maintain protective atmosphere."
+    condition:
+      field: target_shelf_life
+      operator: ">="
+      value: 180
+    action: REQUIRE_BARRIER
+    constraints:
+      max_otr: 20.0
+      max_wvtr: 3.0
+    explanation: "Requested shelf-life exceeds 180 days; long-term degradation kinetics require high-integrity barrier materials."
+
+  - id: R006_SUB_ZERO_FREEZER_STORAGE
+    name: Sub-Zero Storage Flexibility
+    description: "Sub-zero temperatures induce brittle glass transition in certain rigid plastics."
+    condition:
+      field: storage_temperature
+      operator: "<="
+      value: -1.0
+    action: REQUIRE_COLD_FLEXIBILITY
+    constraints:
+      disallowed_polymer_types: ["Polystyrene", "Unmodified PP"]
+    explanation: "Freezer storage (< 0°C) risks brittle cracking during handling; flexible or impact-modified polymers are required."
+
+  - id: R007_ACIDIC_FOOD_INERTNESS
+    name: Acidic Food Corrosion Prevention
+    description: "Low pH foods degrade unprotected metals or unlined containers."
+    condition:
+      field: ph
+      operator: "<="
+      value: 4.5
+    action: REQUIRE_ACID_RESISTANCE
+    constraints:
+      disallowed_categories: ["Metal"]
+    explanation: "Low pH (<= 4.5) acidic foods cause acid corrosion on unlacquered metals, requiring inert polymers or barrier coatings."
+
+  - id: R008_HIGH_LIGHT_SENSITIVITY
+    name: Photo-Oxidation Protection
+    description: "Light sensitive products require opacity, amber coloration, or foil barrier."
+    condition:
+      field: light_sensitivity
+      operator: "=="
+      value: "High"
+    action: REQUIRE_BARRIER
+    constraints:
+      min_light_barrier_rank: 2  # Good or Excellent
+    explanation: "High light sensitivity causes photo-induced oxidation of riboflavin, vitamins, and lipids; opaque, amber, or metallized packaging is required."
