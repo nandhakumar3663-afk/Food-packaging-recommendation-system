@@ -126,8 +126,8 @@ Developed and tested for local execution on:
   - Screenshot capture checklist (`docs/screenshots/README.md`).
 - **Physical Hardware Validation Statement**:
   - Physical hardware validation is pending. The IoT software pipeline was validated using simulated sensor telemetry.
-- **118 Automated Tests Passing**:
-  - Phase 8 finalization tests added covering expanded health check, configuration security, CPU compliance, setup script integrity, and documentation completeness (118/118 passing in ~3.5s).
+- **127 Automated Tests Passing**:
+  - Full test suite covering validation, database abstraction, rule engine, scoring, ML pipeline, IoT ingestion, API hardening, deployment configuration, and PostgreSQL compatibility (127/127 passing in ~3.6s).
 
 ---
 
@@ -339,7 +339,39 @@ python scripts/demo.py
 ```bash
 python -m pytest tests/ -v
 ```
-*Executes all 100+ unit, integration, edge-case, security, and finalization tests across API, database, rules, scoring, ML, IoT, hardening, and deployment readiness.*
+*Executes all 127 unit, integration, edge-case, security, deployment, and finalization tests across API, dual-database layer, rules, scoring, ML, IoT, hardening, and Render readiness.*
+
+---
+
+## Production Deployment on Render (Gunicorn + PostgreSQL)
+
+The repository is configured for production deployment on **Render** with persistent PostgreSQL storage and Gunicorn WSGI server.
+
+### Architecture Highlights
+- **WSGI Server**: Gunicorn 21.2+ binding to `0.0.0.0:$PORT` running 2 worker processes targeting `run:app`.
+- **Database Abstraction**: Automatically uses **Render PostgreSQL** when `DATABASE_URL` is set, and falls back to **SQLite** locally.
+- **Python Version**: Pinned to Python `3.12.3` via `.python-version`.
+- **CPU-Only**: Zero GPU / CUDA requirements.
+- **IoT Simulator**: Supports targeting the production URL via `--url` or `API_BASE_URL`.
+
+### Deploying via Render Blueprint (Recommended)
+1. Fork or push this repository to GitHub: `https://github.com/nandhakumar3663-afk/Food-packaging-recommendation-system.git`
+2. Open your [Render Dashboard](https://dashboard.render.com/) and click **New +** → **Blueprint**.
+3. Select this repository. Render automatically reads `render.yaml` and provisions:
+   - **Web Service**: Python 3.12 with Gunicorn, auto-seeded catalogs, and `/api/health` monitoring.
+   - **Managed Database**: Render PostgreSQL (`packaging_db`), injecting `DATABASE_URL` automatically.
+4. Click **Apply** to deploy.
+
+### Production Environment Variables
+| Variable | Value | Description |
+|:---|:---|:---|
+| `FLASK_ENV` | `production` | Enforces production mode and disables debug stack traces. |
+| `PYTHON_VERSION` | `3.12.3` | Pinned Python runtime. |
+| `SECRET_KEY` | *(Render Generated)* | Session cookie security key. |
+| `DATABASE_URL` | *(Injected by Render Postgres)* | PostgreSQL connection string. |
+| `PORT` | *(Injected by Render)* | Web service listening port (default 10000). |
+
+See [docs/deployment.md](docs/deployment.md) for full manual deployment steps, troubleshooting, and production verification checklist.
 
 ---
 

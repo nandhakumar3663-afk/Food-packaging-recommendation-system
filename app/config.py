@@ -20,6 +20,12 @@ _DEFAULT_DB = DATA_DIR / "packaging_system.db"
 DATABASE_PATH = Path(os.environ.get("DATABASE_PATH", str(_DEFAULT_DB)))
 RULES_FILE = PROJECT_ROOT / "rules" / "packaging_rules.yaml"
 
+# Database URL for PostgreSQL (Render / Production)
+_raw_db_url = os.environ.get("DATABASE_URL")
+if _raw_db_url and _raw_db_url.startswith("postgres://"):
+    _raw_db_url = _raw_db_url.replace("postgres://", "postgresql://", 1)
+DATABASE_URL = _raw_db_url
+
 # Ensure data directory exists
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -29,7 +35,9 @@ class Config:
     PROJECT_ROOT = PROJECT_ROOT
     DATA_DIR = DATA_DIR
     SECRET_KEY = os.environ.get("SECRET_KEY", "smart-packaging-dev-key-change-in-production")
-    DATABASE_URI = f"sqlite:///{DATABASE_PATH}"
+    DATABASE_URL = DATABASE_URL
+    IS_POSTGRES = bool(DATABASE_URL)
+    DATABASE_URI = DATABASE_URL if DATABASE_URL else f"sqlite:///{DATABASE_PATH}"
     DATABASE_PATH = DATABASE_PATH
     RULES_FILE = RULES_FILE
     DEBUG = False

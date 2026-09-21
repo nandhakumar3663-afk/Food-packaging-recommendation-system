@@ -18,6 +18,7 @@ Usage Examples:
     python scripts/simulate_iot.py --continuous --interval 5
 """
 
+import os
 import argparse
 import json
 import random
@@ -83,8 +84,9 @@ def post_reading(host: str, payload: dict) -> dict:
 
 
 def main():
+    default_host = os.environ.get("API_BASE_URL", "http://127.0.0.1:5000")
     parser = argparse.ArgumentParser(description="IoT Telemetry Simulator")
-    parser.add_argument("--host", default="http://127.0.0.1:5000", help="Flask server URL")
+    parser.add_argument("--host", "--url", dest="host", default=default_host, help="Flask server URL (defaults to API_BASE_URL env or http://127.0.0.1:5000)")
     parser.add_argument("--device-id", default="ESP32-SIM-01", help="Device identifier")
     parser.add_argument("--analysis-id", type=int, default=1, help="Linked recommendation analysis ID")
     parser.add_argument("--mode", choices=["normal", "watch", "warning"], default="normal", help="Simulation state")

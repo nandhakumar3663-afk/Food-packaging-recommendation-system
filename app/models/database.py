@@ -1,10 +1,11 @@
 """
-Database management module for SQLite.
-Handles connection lifecycles, schema migrations, and CRUD operations.
+Database management module for SQLite (local development) and PostgreSQL (production).
+Handles connection lifecycles, schema migrations, and CRUD operations across backends.
 """
 
 import sqlite3
 import json
+import logging
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 from contextlib import contextmanager
@@ -12,26 +13,291 @@ from contextlib import contextmanager
 from app.config import Config
 from app.models.schemas import FoodItem, PackagingMaterial
 
+logger = logging.getLogger(__name__)
+
+
+def _is_postgres_active(db_path: Optional[Path] = None) -> bool:
+    """Return True if PostgreSQL backend should be used for this call."""
+    if not (Config.IS_POSTGRES and Config.DATABASE_URL):
+        return False
+    # If db_path is None or points to default DATABASE_PATH, use PostgreSQL
+    if db_path is None or str(db_path) == str(Config.DATABASE_PATH):
+        return True
+    return False
+
+
+class DBRow(dict):
+    """Dictionary-like row with integer index access (mimics sqlite3.Row)."""
+
+    def __init__(self, data: dict):
+        super().__init__(data)
+        self._values = list(data.values())
+
+    def __getitem__(self, item):
+        if isinstance(item, int):
+            return self._values[item]
+        return super().__getitem__(item)
+
+
+class PostgresCursorWrapper:
+    """Wrapper around psycopg2 cursor providing an SQLite-like interface."""
+
+    def __init__(self, raw_cursor):
+        self._cur = raw_cursor
+        self.lastrowid = None
+
+    @property
+    def rowcount(self) -> int:
+        return self._cur.rowcount
+
+    def execute(self, query: str, params: Any = ()):
+        if params is None:
+            params = ()
+        elif not isinstance(params, (tuple, list)):
+            params = (params,)
+
+        # Convert SQLite ? placeholders to PostgreSQL %s
+        translated = query.replace("?", "%s")
+
+        # Auto-append RETURNING for primary key tracking on INSERT
+        q_upper = translated.strip().upper()
+        needs_returning = False
+        if q_upper.startswith("INSERT INTO") and "RETURNING" not in q_upper:
+            for tbl, pk in [
+                ("FOOD", "food_id"),
+                ("PACKAGING_MATERIAL", "material_id"),
+                ("RECOMMENDATION", "recommendation_id"),
+                ("IOT_READINGS", "id"),
+                ("STORAGE", "storage_id"),
+            ]:
+                if f"INSERT INTO {tbl}" in q_upper:
+                    translated = translated.rstrip("; \t\n") + f" RETURNING {pk}"
+                    needs_returning = True
+                    break
+
+        self._cur.execute(translated, params)
+
+        if needs_returning:
+            try:
+                row = self._cur.fetchone()
+                if row:
+                    self.lastrowid = (
+                        row[0]
+                        if isinstance(row, (tuple, list))
+                        else list(row.values())[0]
+                    )
+            except Exception:
+                pass
+
+        return self
+
+    def fetchone(self) -> Optional[DBRow]:
+        try:
+            row = self._cur.fetchone()
+            return DBRow(dict(row)) if row is not None else None
+        except Exception:
+            return None
+
+    def fetchall(self) -> List[DBRow]:
+        try:
+            rows = self._cur.fetchall()
+            return [DBRow(dict(r)) for r in rows]
+        except Exception:
+            return []
+
+    def __iter__(self):
+        try:
+            for r in self._cur:
+                yield DBRow(dict(r))
+        except Exception:
+            return
+
+    def close(self):
+        self._cur.close()
+
+
+class PostgresConnectionWrapper:
+    """Wrapper around psycopg2 connection providing an SQLite-compatible interface."""
+
+    def __init__(self, raw_conn):
+        self._conn = raw_conn
+
+    def cursor(self) -> PostgresCursorWrapper:
+        import psycopg2.extras
+        raw_cur = self._conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        return PostgresCursorWrapper(raw_cur)
+
+    def execute(self, query: str, params: Any = ()) -> PostgresCursorWrapper:
+        cur = self.cursor()
+        return cur.execute(query, params)
+
+    def commit(self):
+        self._conn.commit()
+
+    def rollback(self):
+        self._conn.rollback()
+
+    def close(self):
+        self._conn.close()
+
 
 @contextmanager
 def get_db_connection(db_path: Optional[Path] = None):
-    """Context manager for acquiring SQLite connections with foreign key enforcement."""
-    path = str(db_path or Config.DATABASE_PATH)
-    conn = sqlite3.connect(path, timeout=10.0)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON;")
-    try:
-        yield conn
-        conn.commit()
-    except Exception:
-        conn.rollback()
-        raise
-    finally:
-        conn.close()
+    """Context manager for acquiring SQLite or PostgreSQL connections."""
+    if _is_postgres_active(db_path):
+        import psycopg2
+        conn = psycopg2.connect(Config.DATABASE_URL)
+        wrapped = PostgresConnectionWrapper(conn)
+        try:
+            yield wrapped
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+    else:
+        path = str(db_path or Config.DATABASE_PATH)
+        conn = sqlite3.connect(path, timeout=10.0)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA foreign_keys = ON;")
+        try:
+            yield conn
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+
+
+def _init_postgres_database() -> None:
+    """Initialize PostgreSQL database tables and indices for production."""
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+
+        # Food Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS food (
+                food_id SERIAL PRIMARY KEY,
+                food_name TEXT NOT NULL,
+                category TEXT NOT NULL,
+                moisture REAL NOT NULL,
+                fat REAL NOT NULL,
+                ph REAL NOT NULL,
+                respiration_rate TEXT NOT NULL,
+                storage_temperature REAL NOT NULL,
+                storage_rh REAL NOT NULL,
+                target_shelf_life INTEGER NOT NULL,
+                oxygen_sensitivity TEXT NOT NULL,
+                moisture_sensitivity TEXT NOT NULL,
+                light_sensitivity TEXT NOT NULL,
+                source TEXT NOT NULL,
+                source_url TEXT,
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+
+        # Packaging Material Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS packaging_material (
+                material_id SERIAL PRIMARY KEY,
+                material_name TEXT NOT NULL,
+                material_category TEXT NOT NULL,
+                polymer_type TEXT,
+                otr REAL NOT NULL,
+                otr_unit TEXT DEFAULT 'cc/(m²·day·atm)',
+                otr_test_condition TEXT NOT NULL,
+                wvtr REAL NOT NULL,
+                wvtr_unit TEXT DEFAULT 'g/(m²·day)',
+                wvtr_test_condition TEXT NOT NULL,
+                thickness REAL NOT NULL,
+                thickness_unit TEXT DEFAULT 'μm',
+                oxygen_barrier TEXT NOT NULL,
+                moisture_barrier TEXT NOT NULL,
+                light_barrier TEXT NOT NULL,
+                mechanical_strength TEXT NOT NULL,
+                sealability TEXT NOT NULL,
+                recyclability REAL NOT NULL,
+                renewable_content REAL NOT NULL,
+                estimated_cost REAL NOT NULL,
+                source TEXT NOT NULL,
+                source_url TEXT,
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+
+        # Storage Conditions Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS storage (
+                storage_id SERIAL PRIMARY KEY,
+                temperature REAL NOT NULL,
+                humidity REAL NOT NULL,
+                storage_type TEXT NOT NULL,
+                transport_condition TEXT NOT NULL
+            );
+        """)
+
+        # Recommendation Log Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS recommendation (
+                recommendation_id SERIAL PRIMARY KEY,
+                food_id INTEGER,
+                food_name TEXT NOT NULL,
+                category TEXT NOT NULL,
+                selected_material_id INTEGER NOT NULL,
+                material_name TEXT NOT NULL,
+                recommendation_type TEXT NOT NULL,
+                compatibility_score REAL NOT NULL,
+                oxygen_score REAL NOT NULL,
+                moisture_score REAL NOT NULL,
+                strength_score REAL NOT NULL,
+                sealability_score REAL NOT NULL,
+                shelf_life_score REAL NOT NULL,
+                sustainability_score REAL NOT NULL,
+                cost_score REAL NOT NULL,
+                reason TEXT NOT NULL,
+                triggered_rules TEXT,
+                input_snapshot TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(selected_material_id) REFERENCES packaging_material(material_id)
+            );
+        """)
+
+        # IoT Storage Readings Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS iot_readings (
+                id SERIAL PRIMARY KEY,
+                device_id TEXT NOT NULL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                temperature REAL NOT NULL,
+                humidity REAL NOT NULL,
+                co2 REAL,
+                analysis_id INTEGER,
+                status TEXT DEFAULT 'NORMAL',
+                source TEXT DEFAULT 'SENSOR OBSERVATION',
+                signal_quality INTEGER,
+                FOREIGN KEY(analysis_id) REFERENCES recommendation(recommendation_id)
+            );
+        """)
+
+        # Performance indices
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_food_category ON food(category);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_material_cat ON packaging_material(material_category);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_rec_food ON recommendation(food_id);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_iot_timestamp ON iot_readings(timestamp);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_iot_device ON iot_readings(device_id);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_iot_analysis ON iot_readings(analysis_id);")
 
 
 def init_database(db_path: Optional[Path] = None) -> None:
     """Initialize database tables for the application."""
+    if _is_postgres_active(db_path):
+        _init_postgres_database()
+        return
+
     path = db_path or Config.DATABASE_PATH
     Path(path).parent.mkdir(parents=True, exist_ok=True)
 
@@ -442,25 +708,43 @@ def get_active_devices(
     """
     with get_db_connection(db_path) as conn:
         cursor = conn.cursor()
-        cursor.execute("""
-            SELECT 
-                device_id,
-                MAX(timestamp) AS last_seen,
-                COUNT(*) AS total_readings,
-                MAX(CASE WHEN co2 IS NOT NULL THEN 1 ELSE 0 END) AS has_co2,
-                (strftime('%s', 'now') - strftime('%s', MAX(timestamp))) AS seconds_since_ping
-            FROM iot_readings
-            GROUP BY device_id
-            ORDER BY last_seen DESC
-        """)
+        if _is_postgres_active(db_path):
+            cursor.execute("""
+                SELECT 
+                    device_id,
+                    MAX(timestamp) AS last_seen,
+                    COUNT(*) AS total_readings,
+                    MAX(CASE WHEN co2 IS NOT NULL THEN 1 ELSE 0 END) AS has_co2,
+                    ROUND(EXTRACT(EPOCH FROM (NOW() - MAX(timestamp)))) AS seconds_since_ping
+                FROM iot_readings
+                GROUP BY device_id
+                ORDER BY last_seen DESC
+            """)
+        else:
+            cursor.execute("""
+                SELECT 
+                    device_id,
+                    MAX(timestamp) AS last_seen,
+                    COUNT(*) AS total_readings,
+                    MAX(CASE WHEN co2 IS NOT NULL THEN 1 ELSE 0 END) AS has_co2,
+                    (strftime('%s', 'now') - strftime('%s', MAX(timestamp))) AS seconds_since_ping
+                FROM iot_readings
+                GROUP BY device_id
+                ORDER BY last_seen DESC
+            """)
         devices = []
         for row in cursor.fetchall():
             d = dict(row)
             sec = d.get("seconds_since_ping")
+            if sec is not None:
+                try:
+                    sec = int(sec)
+                except (ValueError, TypeError):
+                    sec = None
             is_online = sec is not None and sec <= offline_threshold_seconds
             devices.append({
                 "device_id": d["device_id"],
-                "last_seen": d["last_seen"],
+                "last_seen": str(d["last_seen"]),
                 "total_readings": d["total_readings"],
                 "has_co2": bool(d["has_co2"]),
                 "seconds_since_ping": sec,
@@ -483,11 +767,19 @@ def prune_iot_readings(
     total_pruned = 0
     with get_db_connection(db_path) as conn:
         cursor = conn.cursor()
+        is_pg = _is_postgres_active(db_path)
+
         # 1. Prune by age
-        cursor.execute("""
-            DELETE FROM iot_readings 
-            WHERE timestamp < datetime('now', '-' || ? || ' days');
-        """, (retention_days,))
+        if is_pg:
+            cursor.execute("""
+                DELETE FROM iot_readings 
+                WHERE timestamp < NOW() - (%s || ' days')::INTERVAL;
+            """, (retention_days,))
+        else:
+            cursor.execute("""
+                DELETE FROM iot_readings 
+                WHERE timestamp < datetime('now', '-' || ? || ' days');
+            """, (retention_days,))
         total_pruned += cursor.rowcount
 
         # 2. Prune excess per device if over ceiling
@@ -495,15 +787,26 @@ def prune_iot_readings(
         devices = [row["device_id"] for row in cursor.fetchall()]
         
         for dev in devices:
-            cursor.execute("""
-                DELETE FROM iot_readings
-                WHERE id IN (
-                    SELECT id FROM iot_readings
-                    WHERE device_id = ?
-                    ORDER BY timestamp DESC, id DESC
-                    LIMIT -1 OFFSET ?
-                );
-            """, (dev, max_records_per_device))
+            if is_pg:
+                cursor.execute("""
+                    DELETE FROM iot_readings
+                    WHERE id IN (
+                        SELECT id FROM iot_readings
+                        WHERE device_id = %s
+                        ORDER BY timestamp DESC, id DESC
+                        OFFSET %s
+                    );
+                """, (dev, max_records_per_device))
+            else:
+                cursor.execute("""
+                    DELETE FROM iot_readings
+                    WHERE id IN (
+                        SELECT id FROM iot_readings
+                        WHERE device_id = ?
+                        ORDER BY timestamp DESC, id DESC
+                        LIMIT -1 OFFSET ?
+                    );
+                """, (dev, max_records_per_device))
             total_pruned += cursor.rowcount
 
     return total_pruned

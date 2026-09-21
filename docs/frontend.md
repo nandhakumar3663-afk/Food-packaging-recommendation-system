@@ -76,12 +76,12 @@ The client-side logic is split into focused modules located in `static/js/`:
 
 | Module | Responsibility |
 | :--- | :--- |
-| [`api.js`](file:///home/nandha/Downloads/packaging-system/Food-packaging-recommendation-system/static/js/api.js) | Centralized `fetch()` client. Handles HTTP 400/404/500 errors, network connection drops, and exposes clean promise methods (`getFoods`, `getMaterials`, `analyzePackaging`, `getHistory`, `getPresets`). |
-| [`ui.js`](file:///home/nandha/Downloads/packaging-system/Food-packaging-recommendation-system/static/js/ui.js) | UI utilities: non-blocking toast notifications (`UI.showToast`), simulated progressive loading overlay (`UI.simulateAnalysisProgress`), provenance badge generator, and score color-coders. |
-| [`analyze.js`](file:///home/nandha/Downloads/packaging-system/Food-packaging-recommendation-system/static/js/analyze.js) | Form state management, dynamic preset autofill, client-side boundary validation, submit handling, and redirect to results view via `sessionStorage`. |
-| [`results.js`](file:///home/nandha/Downloads/packaging-system/Food-packaging-recommendation-system/static/js/results.js) | Renders recommendation results from `sessionStorage` or `/api/history/<id>`, animates subscore progress bars, formats triggered rule cards, and populates alternatives. |
-| [`compare.js`](file:///home/nandha/Downloads/packaging-system/Food-packaging-recommendation-system/static/js/compare.js) | Fetches materials catalog via `API.getMaterials()`, populates category filters, and performs real-time client-side table filtering. |
-| [`history.js`](file:///home/nandha/Downloads/packaging-system/Food-packaging-recommendation-system/static/js/history.js) | Loads historical analyses from `API.getHistory()`, handles limit changes, and creates action links. |
+| [`api.js`](../static/js/api.js) | Centralized `fetch()` client. Handles HTTP 400/404/500 errors, network connection drops, and exposes clean promise methods (`getFoods`, `getMaterials`, `analyzePackaging`, `getHistory`, `getPresets`). |
+| [`ui.js`](../static/js/ui.js) | UI utilities: non-blocking toast notifications (`UI.showToast`), simulated progressive loading overlay (`UI.simulateAnalysisProgress`), provenance badge generator, and score color-coders. |
+| [`analyze.js`](../static/js/analyze.js) | Form state management, dynamic preset autofill, client-side boundary validation, submit handling, and redirect to results view via `sessionStorage`. |
+| [`results.js`](../static/js/results.js) | Renders recommendation results from `sessionStorage` or `/api/history/<id>`, animates subscore progress bars, formats triggered rule cards, and populates alternatives. |
+| [`compare.js`](../static/js/compare.js) | Fetches materials catalog via `API.getMaterials()`, populates category filters, and performs real-time client-side table filtering. |
+| [`history.js`](../static/js/history.js) | Loads historical analyses from `API.getHistory()`, handles limit changes, and creates action links. |
 
 ---
 

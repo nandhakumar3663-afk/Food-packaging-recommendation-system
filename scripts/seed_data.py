@@ -26,18 +26,31 @@ from app.utils.validation import validate_food_input, validate_material_input
 
 def seed_database(db_path=None):
     """Load JSON sample records into the database after validating schemas."""
-    target_path = db_path or Config.DATABASE_PATH
-    print(f"Seeding database at: {target_path}")
+    target_path = None if (Config.IS_POSTGRES and db_path is None) else (db_path or Config.DATABASE_PATH)
+    backend_label = "PostgreSQL" if Config.IS_POSTGRES and db_path is None else f"SQLite at: {target_path}"
+    print(f"Seeding {backend_label}")
 
     # Ensure schema is initialized
     init_database(target_path)
 
     # Clean existing data to prevent duplicate seeds
     with get_db_connection(target_path) as conn:
+        conn.execute("DELETE FROM iot_readings;")
         conn.execute("DELETE FROM recommendation;")
         conn.execute("DELETE FROM packaging_material;")
         conn.execute("DELETE FROM food;")
-        conn.execute("DELETE FROM sqlite_sequence WHERE name IN ('food', 'packaging_material', 'recommendation');")
+        if not (Config.IS_POSTGRES and db_path is None):
+            try:
+                conn.execute("DELETE FROM sqlite_sequence WHERE name IN ('food', 'packaging_material', 'recommendation', 'iot_readings');")
+            except Exception:
+                pass
+        else:
+            try:
+                conn.execute("ALTER SEQUENCE food_food_id_seq RESTART WITH 1;")
+                conn.execute("ALTER SEQUENCE packaging_material_material_id_seq RESTART WITH 1;")
+                conn.execute("ALTER SEQUENCE recommendation_recommendation_id_seq RESTART WITH 1;")
+            except Exception:
+                pass
 
     sample_dir = Config.PROJECT_ROOT / "data" / "sample"
     foods_file = sample_dir / "sample_foods.json"
