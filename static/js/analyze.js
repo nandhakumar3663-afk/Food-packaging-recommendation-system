@@ -1,209 +1,266 @@
 /**
- * Analysis Form Controller.
- * Manages preset loading, client validation, simulated execution steps, and submission.
+ * Analysis Form Wizard & Preset Handling (Step 1-4).
+ * Enforces client-side validation, smooth step navigation, and API submission.
  */
 
-document.addEventListener("DOMContentLoaded", async () => {
-  const form = document.getElementById("packaging-analysis-form");
+document.addEventListener("DOMContentLoaded", async function() {
+  const form = document.getElementById("analyze-form");
   const presetSelect = document.getElementById("preset-select");
-  const presetBanner = document.getElementById("preset-loaded-banner");
-  const submitBtn = document.getElementById("submit-analysis-btn");
+  const btnLoadPreset = document.getElementById("btn-load-preset");
+  const presetStatus = document.getElementById("preset-status");
 
-  if (!form) return;
+  let currentStep = 1;
+  const totalSteps = 4;
+  let presetsData = [];
 
-  // 1. Fetch presets on page load
+  // =========================================================================
+  // 1. Load Food Presets from Backend API
+  // =========================================================================
   try {
-    const data = await API.getPresets();
-    if (data && data.presets && presetSelect) {
-      data.presets.forEach(p => {
+    const res = await ApiClient.getPresets();
+    if (res && res.success && res.presets) {
+      presetsData = res.presets;
+      presetsData.forEach(p => {
         const opt = document.createElement("option");
         opt.value = p.food_id;
         opt.textContent = `${p.food_name} (${p.category})`;
-        opt.dataset.preset = JSON.stringify(p);
         presetSelect.appendChild(opt);
       });
     }
   } catch (err) {
-    console.warn("Could not load presets:", err.message);
+    console.warn("Could not load presets:", err);
   }
 
-  // 2. Handle Preset Selection
-  if (presetSelect) {
-    presetSelect.addEventListener("change", (e) => {
-      const selectedOpt = presetSelect.options[presetSelect.selectedIndex];
-      if (!selectedOpt || !selectedOpt.dataset.preset) {
-        if (presetBanner) presetBanner.style.display = "none";
-        return;
-      }
+  // Handle Preset Selection
+  function applyPreset() {
+    const selectedId = parseInt(presetSelect.value, 10);
+    const preset = presetsData.find(p => p.food_id === selectedId);
+    if (!preset) return;
 
-      const p = JSON.parse(selectedOpt.dataset.preset);
+    document.getElementById("food_name").value = preset.food_name || "";
+    document.getElementById("category").value = preset.category || "";
+    document.getElementById("moisture").value = preset.moisture !== undefined ? preset.moisture : 50;
+    document.getElementById("fat").value = preset.fat !== undefined ? preset.fat : 5;
+    document.getElementById("ph").value = preset.ph !== undefined ? preset.ph : 6.0;
+    document.getElementById("respiration_rate").value = preset.respiration_rate || "None";
+    document.getElementById("target_shelf_life").value = preset.target_shelf_life || 30;
+    document.getElementById("storage_temperature").value = preset.storage_temperature !== undefined ? preset.storage_temperature : 20;
+    document.getElementById("storage_rh").value = preset.storage_rh !== undefined ? preset.storage_rh : 60;
+    document.getElementById("oxygen_sensitivity").value = preset.oxygen_sensitivity || "Medium";
+    document.getElementById("moisture_sensitivity").value = preset.moisture_sensitivity || "Medium";
+    document.getElementById("light_sensitivity").value = preset.light_sensitivity || "Low";
 
-      // Populate form fields
-      setVal("food_id", p.food_id);
-      setVal("food_name", p.food_name);
-      setVal("category", p.category);
-      setVal("moisture", p.moisture);
-      setVal("fat", p.fat);
-      setVal("ph", p.ph);
-      setVal("respiration_rate", p.respiration_rate);
-      setVal("storage_temperature", p.storage_temperature);
-      setVal("storage_rh", p.storage_rh);
-      setVal("target_shelf_life", p.target_shelf_life);
-      setVal("oxygen_sensitivity", p.oxygen_sensitivity);
-      setVal("moisture_sensitivity", p.moisture_sensitivity);
-      setVal("light_sensitivity", p.light_sensitivity);
+    if (presetStatus) {
+      presetStatus.style.display = "inline-flex";
+    }
+    UI.showToast(`Loaded preset for ${preset.food_name}`, "info");
+  }
 
-      // Clear previous validation errors
-      clearValidationErrors();
+  if (btnLoadPreset) btnLoadPreset.addEventListener("click", applyPreset);
+  if (presetSelect) presetSelect.addEventListener("change", applyPreset);
 
-      // Show clear preset banner
-      if (presetBanner) {
-        presetBanner.textContent = `Preset loaded: ${p.food_name}. You may adjust any parameter below.`;
-        presetBanner.style.display = "block";
-      }
+  // =========================================================================
+  // 2. Step Wizard Navigation
+  // =========================================================================
+  function updateStepUI(step) {
+    currentStep = step;
 
-      UI.showToast(`Loaded preset: ${p.food_name}`, "success");
+    // Toggle form steps
+    document.querySelectorAll(".form-step").forEach(el => {
+      const stepNum = parseInt(el.getAttribute("data-step"), 10);
+      el.classList.toggle("active", stepNum === currentStep);
     });
+
+    // Update wizard indicators
+    for (let i = 1; i <= totalSteps; i++) {
+      const ind = document.getElementById(`step-indicator-i`.replace("i", i));
+      if (!ind) continue;
+      ind.classList.remove("active", "completed");
+      if (i === currentStep) {
+        ind.classList.add("active");
+      } else if (i < currentStep) {
+        ind.classList.add("completed");
+      }
+    }
+
+    window.scrollTo({ top: 120, behavior: "smooth" });
   }
 
-  // 3. Client-side Validation Helper
-  function validateForm() {
-    clearValidationErrors();
+  // Next Step Handlers
+  document.querySelectorAll(".next-step").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const nextStep = parseInt(btn.getAttribute("data-next"), 10);
+      if (validateCurrentStep(currentStep)) {
+        updateStepUI(nextStep);
+      }
+    });
+  });
+
+  // Previous Step Handlers
+  document.querySelectorAll(".prev-step").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const prevStep = parseInt(btn.getAttribute("data-prev"), 10);
+      updateStepUI(prevStep);
+    });
+  });
+
+  // =========================================================================
+  // 3. Client-Side Validation
+  // =========================================================================
+  function showError(fieldId, msg) {
+    const errorEl = document.getElementById(`error-${fieldId}`);
+    const inputEl = document.getElementById(fieldId);
+    if (errorEl) {
+      errorEl.textContent = msg;
+      errorEl.style.display = "block";
+    }
+    if (inputEl) {
+      inputEl.classList.add("input-error");
+    }
+  }
+
+  function clearError(fieldId) {
+    const errorEl = document.getElementById(`error-${fieldId}`);
+    const inputEl = document.getElementById(fieldId);
+    if (errorEl) {
+      errorEl.textContent = "";
+      errorEl.style.display = "none";
+    }
+    if (inputEl) {
+      inputEl.classList.remove("input-error");
+    }
+  }
+
+  function validateCurrentStep(step) {
     let isValid = true;
 
-    function markError(fieldId, msg) {
-      const input = document.getElementById(fieldId);
-      const group = input ? input.closest(".form-group") : null;
-      if (group) {
-        group.classList.add("has-error");
-        let errSpan = group.querySelector(".field-error");
-        if (!errSpan) {
-          errSpan = document.createElement("div");
-          errSpan.className = "field-error";
-          group.appendChild(errSpan);
-        }
-        errSpan.textContent = msg;
+    if (step === 1) {
+      const foodName = document.getElementById("food_name").value.trim();
+      const category = document.getElementById("category").value;
+
+      clearError("food_name");
+      clearError("category");
+
+      if (!foodName) {
+        showError("food_name", "Please enter a food name.");
+        isValid = false;
       }
-      isValid = false;
+      if (!category) {
+        showError("category", "Please select a food category.");
+        isValid = false;
+      }
+    } else if (step === 2) {
+      const moisture = parseFloat(document.getElementById("moisture").value);
+      const fat = parseFloat(document.getElementById("fat").value);
+      const ph = parseFloat(document.getElementById("ph").value);
+
+      clearError("moisture");
+      clearError("fat");
+      clearError("ph");
+
+      if (isNaN(moisture) || moisture < 0 || moisture > 100) {
+        showError("moisture", "Moisture must be between 0 and 100%.");
+        isValid = false;
+      }
+      if (isNaN(fat) || fat < 0 || fat > 100) {
+        showError("fat", "Fat must be between 0 and 100%.");
+        isValid = false;
+      }
+      if (!isNaN(moisture) && !isNaN(fat) && (moisture + fat > 100)) {
+        showError("moisture", "Sum of Moisture and Fat cannot exceed 100%.");
+        showError("fat", "Sum of Moisture and Fat cannot exceed 100%.");
+        isValid = false;
+      }
+      if (isNaN(ph) || ph < 1.0 || ph > 14.0) {
+        showError("ph", "pH must be between 1.0 and 14.0.");
+        isValid = false;
+      }
+    } else if (step === 3) {
+      const shelfLife = parseInt(document.getElementById("target_shelf_life").value, 10);
+      const temp = parseFloat(document.getElementById("storage_temperature").value);
+      const rh = parseFloat(document.getElementById("storage_rh").value);
+
+      clearError("target_shelf_life");
+      clearError("storage_temperature");
+      clearError("storage_rh");
+
+      if (isNaN(shelfLife) || shelfLife <= 0) {
+        showError("target_shelf_life", "Target shelf life must be at least 1 day.");
+        isValid = false;
+      }
+      if (isNaN(temp) || temp < -30 || temp > 60) {
+        showError("storage_temperature", "Temperature must be between -30°C and 60°C.");
+        isValid = false;
+      }
+      if (isNaN(rh) || rh < 10 || rh > 100) {
+        showError("storage_rh", "Relative humidity must be between 10% and 100%.");
+        isValid = false;
+      }
     }
 
-    const name = getVal("food_name").trim();
-    if (name.length < 2) markError("food_name", "Food commodity name must be at least 2 characters.");
-
-    const category = getVal("category");
-    if (!category) markError("category", "Please select a valid food category.");
-
-    const moisture = parseFloat(getVal("moisture"));
-    if (isNaN(moisture) || moisture < 0 || moisture > 100) {
-      markError("moisture", "Moisture must be between 0.0% and 100.0%.");
-    }
-
-    const fat = parseFloat(getVal("fat"));
-    if (isNaN(fat) || fat < 0 || fat > 100) {
-      markError("fat", "Fat must be between 0.0% and 100.0%.");
-    }
-
-    if (!isNaN(moisture) && !isNaN(fat) && (moisture + fat > 100)) {
-      markError("fat", `Combined moisture (${moisture}%) and fat (${fat}%) cannot exceed 100.0%.`);
-    }
-
-    const ph = parseFloat(getVal("ph"));
-    if (isNaN(ph) || ph < 1.0 || ph > 14.0) {
-      markError("ph", "pH must be between 1.0 and 14.0.");
-    }
-
-    const temp = parseFloat(getVal("storage_temperature"));
-    if (isNaN(temp) || temp < -40 || temp > 60) {
-      markError("storage_temperature", "Temperature must be between -40°C and 60°C.");
-    }
-
-    const rh = parseFloat(getVal("storage_rh"));
-    if (isNaN(rh) || rh < 0 || rh > 100) {
-      markError("storage_rh", "Relative Humidity must be between 0% and 100%.");
-    }
-
-    const shelfLife = parseInt(getVal("target_shelf_life"), 10);
-    if (isNaN(shelfLife) || shelfLife < 1 || shelfLife > 3650) {
-      markError("target_shelf_life", "Shelf life must be between 1 and 3650 days.");
+    if (!isValid) {
+      UI.showToast("Some information needs to be corrected in the highlighted fields.", "warning");
     }
 
     return isValid;
   }
 
-  function clearValidationErrors() {
-    document.querySelectorAll(".form-group.has-error").forEach(el => {
-      el.classList.remove("has-error");
-    });
-  }
-
-  // 4. Form Submission
-  form.addEventListener("submit", async (e) => {
+  // =========================================================================
+  // 4. Form Submission & API Integration
+  // =========================================================================
+  form.addEventListener("submit", async function(e) {
     e.preventDefault();
 
-    if (!validateForm()) {
-      UI.showToast("Please correct highlighted fields before analyzing.", "error");
-      return;
+    // Verify all steps before final submission
+    for (let s = 1; s <= totalSteps; s++) {
+      if (!validateCurrentStep(s)) {
+        updateStepUI(s);
+        return;
+      }
     }
 
     const payload = {
-      food_name: getVal("food_name"),
-      category: getVal("category"),
-      moisture: parseFloat(getVal("moisture")),
-      fat: parseFloat(getVal("fat")),
-      ph: parseFloat(getVal("ph")),
-      respiration_rate: getVal("respiration_rate"),
-      storage_temperature: parseFloat(getVal("storage_temperature")),
-      storage_rh: parseFloat(getVal("storage_rh")),
-      target_shelf_life: parseInt(getVal("target_shelf_life"), 10),
-      storage_type: getVal("storage_type") || "Ambient",
-      transport_condition: getVal("transport_condition") || "Standard Ambient",
-      oxygen_sensitivity: getVal("oxygen_sensitivity"),
-      moisture_sensitivity: getVal("moisture_sensitivity"),
-      light_sensitivity: getVal("light_sensitivity"),
+      food_name: document.getElementById("food_name").value.trim(),
+      category: document.getElementById("category").value,
+      moisture: parseFloat(document.getElementById("moisture").value),
+      fat: parseFloat(document.getElementById("fat").value),
+      ph: parseFloat(document.getElementById("ph").value),
+      respiration_rate: document.getElementById("respiration_rate").value,
+      target_shelf_life: parseInt(document.getElementById("target_shelf_life").value, 10),
+      storage_temperature: parseFloat(document.getElementById("storage_temperature").value),
+      storage_rh: parseFloat(document.getElementById("storage_rh").value),
+      storage_type: document.getElementById("storage_type").value,
+      transport_condition: document.getElementById("transport_condition").value,
+      oxygen_sensitivity: document.getElementById("oxygen_sensitivity").value,
+      moisture_sensitivity: document.getElementById("moisture_sensitivity").value,
+      light_sensitivity: document.getElementById("light_sensitivity").value,
     };
 
-    const foodIdVal = getVal("food_id");
-    if (foodIdVal) payload.food_id = parseInt(foodIdVal, 10);
-
-    // Disable submit button during processing
+    const submitBtn = document.getElementById("btn-submit-analysis");
     if (submitBtn) {
       submitBtn.disabled = true;
       submitBtn.textContent = "Analyzing...";
     }
 
-    const analysisSteps = [
-      "Analyzing food chemical & biological properties",
-      "Evaluating oxygen & moisture degradation risks",
-      "Checking storage environment & temperature limits",
-      "Filtering candidate packaging materials via Rule Engine",
-      "Computing multi-criteria compatibility scores",
-    ];
-
     try {
-      await UI.simulateAnalysisProgress(analysisSteps, async () => {
-        const result = await API.analyzePackaging(payload);
-        // Persist result to sessionStorage for results page
-        sessionStorage.setItem("last_packaging_result", JSON.stringify(result));
-        window.location.href = "/results";
+      await UI.simulateAnalysisProgress(async () => {
+        const response = await ApiClient.analyze(payload);
+        if (response && response.success) {
+          sessionStorage.setItem("last_packaging_result", JSON.stringify(response));
+          window.location.href = "/results";
+        } else {
+          const errList = response.errors ? response.errors.join("; ") : "Invalid submission.";
+          UI.showToast(`Analysis error: ${errList}`, "error");
+        }
       });
     } catch (err) {
-      UI.showToast(err.message, "error");
+      console.error("Submission failed:", err);
+      UI.showToast("We couldn't complete the analysis right now. Please check connection and try again.", "error");
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.textContent = "Analyze Packaging Requirements";
+        submitBtn.innerHTML = "<span>🚀</span> Analyze Packaging";
       }
     }
   });
-
-  // Helpers
-  function getVal(id) {
-    const el = document.getElementById(id);
-    return el ? el.value : "";
-  }
-
-  function setVal(id, val) {
-    const el = document.getElementById(id);
-    if (el) el.value = (val !== null && val !== undefined) ? val : "";
-  }
 });

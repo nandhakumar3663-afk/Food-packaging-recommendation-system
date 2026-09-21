@@ -1,182 +1,200 @@
 {% extends "base.html" %}
 
-{% block title %}Packaging Recommendation Audit Report - Smart Food Packaging AI{% endblock %}
+{% block title %}Smart Food Packaging Report | Printable Document{% endblock %}
 
 {% block content %}
-<div style="max-width:850px; margin:0 auto;">
+<div class="report-wrapper" style="max-width: 850px; margin: 0 auto;">
 
-  <!-- Print Header Toolbar (Hidden during print) -->
-  <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; padding-bottom:1rem; border-bottom:1px solid var(--border-color);">
+  <!-- Print Toolbar (Hidden on paper) -->
+  <div class="no-print" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
     <div>
       <a href="/results" class="btn btn-secondary btn-sm">← Back to Results</a>
     </div>
-    <div style="display:flex; gap:1rem;">
-      <button onclick="window.print()" class="btn btn-primary">
+    <div style="display: flex; gap: 0.75rem;">
+      <button onclick="window.print()" class="btn btn-primary" id="btn-print-report">
         <span>🖨️</span> Print Report
       </button>
     </div>
   </div>
 
   <!-- Printable Report Document Container -->
-  <div class="card" style="padding:2.5rem; background:#fff; color:#1e293b; border:1px solid #cbd5e1; box-shadow:var(--shadow-lg);">
+  <div class="card card-green" style="background: #ffffff; color: var(--text-primary); padding: 2.5rem; border: 2px solid var(--border-green);">
 
-    <!-- Header -->
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:1.5rem; border-bottom:2px solid #0f172a; margin-bottom:1.5rem;">
+    <!-- Report Header -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 1.25rem; border-bottom: 2px solid var(--primary-green); margin-bottom: 1.5rem;">
       <div>
-        <h1 style="font-size:1.65rem; color:#0f172a; font-weight:800; margin-bottom:0.25rem;">
+        <span class="badge badge-green" style="margin-bottom: 0.35rem;">Official Audit Record</span>
+        <h1 style="font-size: 1.65rem; color: var(--dark-green); font-weight: 800; margin: 0.25rem 0;">
           SMART FOOD PACKAGING REPORT
         </h1>
-        <p style="font-size:0.85rem; color:#64748b; margin:0;">
-          Decision Support Analysis & Barrier Compatibility Assessment
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">
+          Decision Support Analysis & Hybrid Rule-ML Compatibility Assessment
         </p>
       </div>
 
-      <div style="text-align:right;">
-        <span style="font-size:0.75rem; color:#64748b; text-transform:uppercase;">Audit Transaction ID</span>
-        <div id="rep-rec-id" style="font-size:1.15rem; font-weight:700; color:#0284c7;">#--</div>
-        <span id="rep-date" style="font-size:0.75rem; color:#94a3b8; display:block;">-</span>
+      <div style="text-align: right;">
+        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Analysis ID</span>
+        <div id="rep-rec-id" style="font-size: 1.25rem; font-weight: 800; color: var(--primary-green);">#--</div>
+        <span id="rep-date" style="font-size: 0.75rem; color: var(--text-muted); display: block;">-</span>
       </div>
     </div>
 
-    <!-- Section 1: Food & Storage Profile -->
-    <div style="margin-bottom:1.75rem;">
-      <h3 style="font-size:1.05rem; color:#0f172a; margin-bottom:0.75rem; text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid #e2e8f0; padding-bottom:0.35rem;">
-        1. Evaluated Food & Environmental Profile
-      </h3>
-
-      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:1rem; font-size:0.875rem;">
+    <!-- 1. Evaluated Food & Environmental Profile -->
+    <div style="margin-bottom: 1.75rem;">
+      <h2 style="font-size: 1rem; color: var(--dark-green); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-green); padding-bottom: 0.35rem; margin-bottom: 0.75rem;">
+        1. Evaluated Food & Storage Profile
+      </h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; font-size: 0.875rem;">
         <div>
-          <span style="color:#64748b; display:block; font-size:0.75rem;">Food Commodity</span>
-          <strong id="rep-food-name" style="color:#0f172a;">-</strong>
-        </div>
-        <div>
-          <span style="color:#64748b; display:block; font-size:0.75rem;">Category</span>
-          <strong id="rep-food-cat" style="color:#0f172a;">-</strong>
+          <span style="color: var(--text-muted); display: block; font-size: 0.75rem;">Food Commodity</span>
+          <strong id="rep-food-name" style="color: var(--text-primary);">-</strong>
         </div>
         <div>
-          <span style="color:#64748b; display:block; font-size:0.75rem;">Target Shelf Life</span>
-          <strong id="rep-shelf-life" style="color:#0f172a;">-</strong>
+          <span style="color: var(--text-muted); display: block; font-size: 0.75rem;">Category</span>
+          <strong id="rep-food-cat" style="color: var(--text-primary);">-</strong>
         </div>
         <div>
-          <span style="color:#64748b; display:block; font-size:0.75rem;">Moisture & Fat Content</span>
-          <strong id="rep-moisture-fat" style="color:#0f172a;">-</strong>
+          <span style="color: var(--text-muted); display: block; font-size: 0.75rem;">Target Shelf Life</span>
+          <strong id="rep-shelf-life" style="color: var(--text-primary);">-</strong>
         </div>
         <div>
-          <span style="color:#64748b; display:block; font-size:0.75rem;">pH / Respiration</span>
-          <strong id="rep-ph-resp" style="color:#0f172a;">-</strong>
+          <span style="color: var(--text-muted); display: block; font-size: 0.75rem;">Composition</span>
+          <strong id="rep-moisture-fat" style="color: var(--text-primary);">-</strong>
         </div>
         <div>
-          <span style="color:#64748b; display:block; font-size:0.75rem;">Storage & Logistics</span>
-          <strong id="rep-storage" style="color:#0f172a;">-</strong>
+          <span style="color: var(--text-muted); display: block; font-size: 0.75rem;">pH & Respiration</span>
+          <strong id="rep-ph-resp" style="color: var(--text-primary);">-</strong>
         </div>
-      </div>
-    </div>
-
-    <!-- Section 2: Recommended Match & Compatibility -->
-    <div style="margin-bottom:1.75rem; background:#f8fafc; border:1px solid #e2e8f0; padding:1.25rem; border-radius:var(--radius-sm);">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
         <div>
-          <span style="display:inline-block; background:#dcfce7; color:#166534; font-size:0.7rem; font-weight:700; padding:0.2rem 0.5rem; border-radius:4px; margin-bottom:0.35rem;">
-            RECOMMENDED MATCH
-          </span>
-          <h2 id="rep-material-name" style="font-size:1.35rem; color:#0f172a; margin:0;">-</h2>
-          <span id="rep-material-cat" style="font-size:0.8rem; color:#64748b;">-</span>
-        </div>
-
-        <div style="text-align:right;">
-          <span style="font-size:0.7rem; color:#64748b; text-transform:uppercase;">Compatibility Score</span>
-          <div id="rep-score-val" style="font-size:1.85rem; font-weight:800; color:#15803d; line-height:1;">
-            0.00%
-          </div>
-          <span style="font-size:0.65rem; color:#64748b;">Project-defined score</span>
-        </div>
-      </div>
-
-      <!-- Technical Material Properties -->
-      <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:0.75rem; font-size:0.8rem; border-top:1px solid #e2e8f0; padding-top:0.75rem;">
-        <div><span style="color:#64748b;">OTR:</span> <strong id="rep-otr">-</strong></div>
-        <div><span style="color:#64748b;">WVTR:</span> <strong id="rep-wvtr">-</strong></div>
-        <div><span style="color:#64748b;">Thickness:</span> <strong id="rep-thickness">-</strong></div>
-        <div><span style="color:#64748b;">Cost:</span> <strong id="rep-cost">-</strong></div>
-        <div><span style="color:#64748b;">Recyclability:</span> <strong id="rep-recyc">-</strong></div>
-        <div><span style="color:#64748b;">Renewable Content:</span> <strong id="rep-renew">-</strong></div>
-        <div><span style="color:#64748b;">Mechanical:</span> <strong id="rep-mech">-</strong></div>
-        <div><span style="color:#64748b;">Sealability:</span> <strong id="rep-seal">-</strong></div>
-      </div>
-    </div>
-
-    <!-- Section 3: Subscore Breakdown -->
-    <div style="margin-bottom:1.75rem;">
-      <h3 style="font-size:1.05rem; color:#0f172a; margin-bottom:0.75rem; text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid #e2e8f0; padding-bottom:0.35rem;">
-        2. Compatibility Subscore Breakdown (0 - 100)
-      </h3>
-
-      <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:0.75rem; font-size:0.825rem;">
-        <div style="background:#f1f5f9; padding:0.5rem; border-radius:4px;">
-          <span style="color:#64748b; display:block;">Oxygen Protection</span>
-          <strong id="rep-sub-o2" style="font-size:1rem; color:#0f172a;">-</strong>
-        </div>
-        <div style="background:#f1f5f9; padding:0.5rem; border-radius:4px;">
-          <span style="color:#64748b; display:block;">Moisture Protection</span>
-          <strong id="rep-sub-wv" style="font-size:1rem; color:#0f172a;">-</strong>
-        </div>
-        <div style="background:#f1f5f9; padding:0.5rem; border-radius:4px;">
-          <span style="color:#64748b; display:block;">Shelf Life Alignment</span>
-          <strong id="rep-sub-shelf" style="font-size:1rem; color:#0f172a;">-</strong>
-        </div>
-        <div style="background:#f1f5f9; padding:0.5rem; border-radius:4px;">
-          <span style="color:#64748b; display:block;">Economic Efficiency</span>
-          <strong id="rep-sub-cost" style="font-size:1rem; color:#0f172a;">-</strong>
+          <span style="color: var(--text-muted); display: block; font-size: 0.75rem;">Storage Conditions</span>
+          <strong id="rep-storage" style="color: var(--text-primary);">-</strong>
         </div>
       </div>
     </div>
 
-    <!-- Section 4: Justification & Triggered Rules -->
-    <div style="margin-bottom:1.75rem;">
-      <h3 style="font-size:1.05rem; color:#0f172a; margin-bottom:0.75rem; text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid #e2e8f0; padding-bottom:0.35rem;">
-        3. Recommendation Justification & Rules
-      </h3>
+    <!-- 2. Packaging Recommendation -->
+    <div style="margin-bottom: 1.75rem; background: var(--very-light-green); border: 1px solid var(--border-green); border-radius: var(--radius-md); padding: 1.25rem;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.75rem;">
+        <div>
+          <span style="font-size: 0.75rem; font-weight: 700; color: var(--primary-green); text-transform: uppercase;">Recommended Packaging Match</span>
+          <h3 id="rep-material-name" style="font-size: 1.35rem; color: var(--dark-green); margin: 0.25rem 0;">-</h3>
+          <span id="rep-material-cat" style="font-size: 0.8rem; color: var(--text-secondary);">-</span>
+        </div>
+        <div style="text-align: right;">
+          <span style="font-size: 0.75rem; color: var(--text-secondary); display: block;">Compatibility Score</span>
+          <span id="rep-score-val" style="font-size: 1.5rem; font-weight: 800; color: var(--dark-green);">--%</span>
+        </div>
+      </div>
 
-      <ul id="rep-reasons" style="padding-left:1.25rem; font-size:0.85rem; color:#334155; margin-bottom:0.75rem; line-height:1.5;">
+      <h4 style="font-size: 0.85rem; color: var(--dark-green); margin-bottom: 0.35rem;">Justification Reasons:</h4>
+      <ul id="rep-reasons" style="font-size: 0.85rem; color: var(--text-primary); line-height: 1.5; padding-left: 1.25rem; margin-bottom: 0.5rem;">
+        <!-- Populated by JS -->
       </ul>
-
-      <div id="rep-rules" style="font-size:0.825rem; color:#475569;"></div>
     </div>
 
-    <!-- Section 5: Provenance & Scientific Disclaimer -->
-    <div style="padding-top:1.25rem; border-top:1px solid #cbd5e1; font-size:0.75rem; color:#64748b; line-height:1.5;">
-      <div style="margin-bottom:0.5rem;">
-        <strong>Data Provenance Citation:</strong> <span id="rep-source">-</span>
+    <!-- 3. Subscores Breakdown Table -->
+    <div style="margin-bottom: 1.75rem;">
+      <h2 style="font-size: 1rem; color: var(--dark-green); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-green); padding-bottom: 0.35rem; margin-bottom: 0.75rem;">
+        2. Compatibility Subscore Ratings
+      </h2>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; text-align: center; font-size: 0.85rem;">
+        <div style="padding: 0.75rem; background: var(--very-light-green); border-radius: var(--radius-sm); border: 1px solid var(--border-green);">
+          <span style="color: var(--text-secondary); display: block; font-size: 0.75rem;">Oxygen Barrier</span>
+          <strong id="rep-sub-o2" style="color: var(--dark-green); font-size: 1.1rem;">--%</strong>
+        </div>
+        <div style="padding: 0.75rem; background: var(--very-light-green); border-radius: var(--radius-sm); border: 1px solid var(--border-green);">
+          <span style="color: var(--text-secondary); display: block; font-size: 0.75rem;">Moisture Barrier</span>
+          <strong id="rep-sub-wv" style="color: var(--dark-green); font-size: 1.1rem;">--%</strong>
+        </div>
+        <div style="padding: 0.75rem; background: var(--very-light-green); border-radius: var(--radius-sm); border: 1px solid var(--border-green);">
+          <span style="color: var(--text-secondary); display: block; font-size: 0.75rem;">Shelf-Life Fit</span>
+          <strong id="rep-sub-shelf" style="color: var(--dark-green); font-size: 1.1rem;">--%</strong>
+        </div>
+        <div style="padding: 0.75rem; background: var(--very-light-green); border-radius: var(--radius-sm); border: 1px solid var(--border-green);">
+          <span style="color: var(--text-secondary); display: block; font-size: 0.75rem;">Economic Cost</span>
+          <strong id="rep-sub-cost" style="color: var(--dark-green); font-size: 1.1rem;">--%</strong>
+        </div>
       </div>
-      <div>
-        <strong>Domain Safety Notice:</strong> The compatibility scores generated in this report are computational estimates based on published literature and engineering heuristics. They do not constitute experimentally certified shelf-life guarantees or packaging validation audits.
+    </div>
+
+    <!-- 4. Technical Material Properties -->
+    <div style="margin-bottom: 1.75rem;">
+      <h2 style="font-size: 1rem; color: var(--dark-green); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-green); padding-bottom: 0.35rem; margin-bottom: 0.75rem;">
+        3. Barrier & Technical Specifications
+      </h2>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; font-size: 0.85rem;">
+        <div>
+          <span style="color: var(--text-muted); display: block; font-size: 0.75rem;">OTR (Oxygen Permeability)</span>
+          <strong id="rep-otr">-</strong>
+        </div>
+        <div>
+          <span style="color: var(--text-muted); display: block; font-size: 0.75rem;">WVTR (Moisture Permeability)</span>
+          <strong id="rep-wvtr">-</strong>
+        </div>
+        <div>
+          <span style="color: var(--text-muted); display: block; font-size: 0.75rem;">Gauge Thickness</span>
+          <strong id="rep-thickness">-</strong>
+        </div>
+        <div>
+          <span style="color: var(--text-muted); display: block; font-size: 0.75rem;">Estimated Material Cost</span>
+          <strong id="rep-cost">-</strong>
+        </div>
+        <div>
+          <span style="color: var(--text-muted); display: block; font-size: 0.75rem;">Recyclability Rating</span>
+          <strong id="rep-recyc">-</strong>
+        </div>
+        <div>
+          <span style="color: var(--text-muted); display: block; font-size: 0.75rem;">Bio-Renewable Content</span>
+          <strong id="rep-renew">-</strong>
+        </div>
+        <div>
+          <span style="color: var(--text-muted); display: block; font-size: 0.75rem;">Mechanical Strength</span>
+          <strong id="rep-mech">-</strong>
+        </div>
+        <div>
+          <span style="color: var(--text-muted); display: block; font-size: 0.75rem;">Heat Sealability</span>
+          <strong id="rep-seal">-</strong>
+        </div>
       </div>
+    </div>
+
+    <!-- 5. Machine Learning Assessment & Rules -->
+    <div style="margin-bottom: 1.75rem;">
+      <h2 style="font-size: 1rem; color: var(--dark-green); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-green); padding-bottom: 0.35rem; margin-bottom: 0.75rem;">
+        4. Machine Learning & Safety Rule Governance
+      </h2>
+      <p id="rep-ml-info" style="font-size: 0.85rem; color: var(--text-primary); margin-bottom: 0.5rem;">
+        RandomForestClassifier (100 Trees, CPU-only) verified compatible candidates against synthetic demonstration patterns.
+      </p>
+      <p id="rep-rules" style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
+        Evaluating active domain rules...
+      </p>
+    </div>
+
+    <!-- 6. Data Provenance & Literature Sources -->
+    <div>
+      <h2 style="font-size: 1rem; color: var(--dark-green); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-green); padding-bottom: 0.35rem; margin-bottom: 0.5rem;">
+        5. Data Provenance & Authoritative Citations
+      </h2>
+      <p id="rep-source" style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
+        Technical metrics sourced from Robertson, G. L. (2012) Food Packaging: Principles and Practice (3rd ed.) and Massey, L. K. (2003) Permeability Properties of Plastics and Elastomers (2nd ed.).
+      </p>
     </div>
 
   </div>
 </div>
-{% endblock %}
 
-{% block extra_scripts %}
 <script>
-document.addEventListener("DOMContentLoaded", async () => {
-  // Determine if recommendation ID is provided in path or query
-  const pathParts = window.location.pathname.split("/");
-  let recId = null;
-  if (pathParts.length > 2 && pathParts[2]) {
-    recId = parseInt(pathParts[2], 10);
-  }
-  if (!recId) {
-    const urlParams = new URLSearchParams(window.location.search);
-    recId = urlParams.get("id");
-  }
+document.addEventListener("DOMContentLoaded", async function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const recId = urlParams.get("id");
 
   let data = null;
 
   if (recId) {
     try {
-      const res = await API.getHistoryById(recId);
-      if (res && res.recommendation) {
+      const res = await ApiClient.getHistoryItem(recId);
+      if (res && res.success && res.recommendation) {
         data = res.recommendation;
       }
     } catch (e) {
@@ -185,7 +203,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   if (!data) {
-    // Fallback to last recommendation in sessionStorage
     const raw = sessionStorage.getItem("last_packaging_result");
     if (raw) {
       const parsed = JSON.parse(raw);
@@ -223,7 +240,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (!data) return;
 
-  // Populate Report Fields
   document.getElementById("rep-rec-id").textContent = `#${data.recommendation_id}`;
   document.getElementById("rep-date").textContent = data.created_at || new Date().toLocaleString();
   document.getElementById("rep-food-name").textContent = data.food_name || "-";

@@ -1,0 +1,42 @@
+{
+  "feature_columns": [
+    "moisture",
+    "fat",
+    "ph",
+    "respiration_rate_encoded",
+    "storage_temperature",
+    "storage_rh",
+    "target_shelf_life",
+    "oxygen_sensitivity_encoded",
+    "moisture_sensitivity_encoded",
+    "light_sensitivity_encoded"
+  ],
+  "respiration_map": {
+    "none": 0,
+    "low": 1,
+    "moderate": 2,
+    "medium": 2,
+    "high": 3,
+    "very high": 4,
+    "very_high": 4
+  },
+  "sensitivity_map": {
+    "low": 1,
+    "moderate": 2,
+    "medium": 2,
+    "high": 3
+  },
+  "target_classes": [
+    "Aluminum Foil Laminate (PET/Al-Foil/PE)",
+    "Aseptic Paperboard Composite (Tetra-style Carton)",
+    "Biaxially Oriented Polypropylene (BOPP)",
+    "EVOH Multi-layer Barrier Film (PE/EVOH/PE)",
+    "Glass Container (Amber / Flint Jar)",
+    "High-Density Polyethylene Film (HDPE)",
+    "Kraft Paper + Bio-PBS Coating (Synthetic Benchmark)",
+    "Low-Density Polyethylene Film (LDPE)",
+    "Metallized PET Film (Met-PET)",
+    "Perforated LDPE Produce Pouch (Synthetic Benchmark)",
+    "Polylactic Acid Film (PLA)"
+  ]
+}

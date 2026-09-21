@@ -1,0 +1,26 @@
+{
+  "dataset_name": "Food Packaging Demonstration Training Dataset",
+  "version": "1.0.0",
+  "provenance": "SYNTHETIC DEMONSTRATION DATA",
+  "authoritative_sources_referenced": [
+    "Robertson, G. L. (2012). Food Packaging: Principles and Practice (3rd ed.). CRC Press.",
+    "Massey, L. K. (2003). Permeability Properties of Plastics and Elastomers (2nd ed.). Plastics Design Library.",
+    "Rhim, J. W. et al. (2006). Bio-nanocomposites for food packaging applications.",
+    "USDA Agricultural Handbook 66 (Hardenburg et al., 1986)"
+  ],
+  "notes": "Demonstration dataset mapping varied food preservation profiles to primary suitable packaging materials. Generated to demonstrate the machine learning pipeline and hybrid rule-ML architecture. Not clinical or laboratory physical shelf-life trial data.",
+  "total_records": 144,
+  "classes_represented": [
+    "Aluminum Foil Laminate (PET/Al-Foil/PE)",
+    "Aseptic Paperboard Composite (Tetra-style Carton)",
+    "Biaxially Oriented Polypropylene (BOPP)",
+    "EVOH Multi-layer Barrier Film (PE/EVOH/PE)",
+    "Glass Container (Amber / Flint Jar)",
+    "High-Density Polyethylene Film (HDPE)",
+    "Kraft Paper + Bio-PBS Coating (Synthetic Benchmark)",
+    "Low-Density Polyethylene Film (LDPE)",
+    "Metallized PET Film (Met-PET)",
+    "Perforated LDPE Produce Pouch (Synthetic Benchmark)",
+    "Polylactic Acid Film (PLA)"
+  ]
+}

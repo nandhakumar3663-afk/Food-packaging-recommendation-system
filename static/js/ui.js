@@ -1,5 +1,6 @@
 /**
- * UI Helper module for notifications, formatters, and progressive loading simulation.
+ * UI Helper module for notifications, tooltips, accordions, and progressive loading simulation.
+ * Fresh, accessible Light-Green design system.
  */
 
 const UI = {
@@ -11,6 +12,7 @@ const UI = {
     if (!container) {
       container = document.createElement("div");
       container.id = "toast-container";
+      container.className = "toast-container";
       document.body.appendChild(container);
     }
 
@@ -28,41 +30,45 @@ const UI = {
   },
 
   /**
-   * Simulated progressive loading modal matching backend analysis steps.
+   * Progressive loading simulation matching backend analysis pipeline.
    */
-  async simulateAnalysisProgress(steps, callback) {
-    const overlay = document.getElementById("loading-overlay");
-    const stepList = document.getElementById("loading-steps");
-    if (!overlay || !stepList) {
+  async simulateAnalysisProgress(callback) {
+    const modal = document.getElementById("loading-modal");
+    const steps = [
+      { id: "p-step-1", text: "Checking food characteristics" },
+      { id: "p-step-2", text: "Checking storage requirements" },
+      { id: "p-step-3", text: "Filtering unsuitable materials with safety rules" },
+      { id: "p-step-4", text: "Machine-learning candidate assessment" },
+      { id: "p-step-5", text: "Evaluating packaging compatibility" },
+      { id: "p-step-6", text: "Preparing your recommendation" },
+    ];
+
+    if (!modal) {
       if (callback) await callback();
       return;
     }
 
-    stepList.innerHTML = "";
-    steps.forEach((stepText, index) => {
-      const item = document.createElement("div");
-      item.className = "step-item";
-      item.id = `step-item-${index}`;
-      item.innerHTML = `<span class="step-icon">○</span> <span>${stepText}</span>`;
-      stepList.appendChild(item);
+    // Reset steps
+    steps.forEach(s => {
+      const el = document.getElementById(s.id);
+      if (el) {
+        el.className = "progress-step-item";
+        el.innerHTML = `<span>○</span> ${s.text}`;
+      }
     });
 
-    overlay.classList.add("active");
+    modal.classList.add("active");
 
-    // Progressive step advancement
     for (let i = 0; i < steps.length; i++) {
-      const currentItem = document.getElementById(`step-item-${i}`);
-      if (currentItem) {
-        currentItem.classList.add("active");
-        currentItem.querySelector(".step-icon").textContent = "◐";
+      const el = document.getElementById(steps[i].id);
+      if (el) {
+        el.className = "progress-step-item active";
+        el.innerHTML = `<span>◐</span> ${steps[i].text}`;
       }
-
-      await new Promise(r => setTimeout(r, 140));
-
-      if (currentItem) {
-        currentItem.classList.remove("active");
-        currentItem.classList.add("completed");
-        currentItem.querySelector(".step-icon").textContent = "✓";
+      await new Promise(r => setTimeout(r, 120));
+      if (el) {
+        el.className = "progress-step-item done";
+        el.innerHTML = `<span style="color: var(--primary-green); font-weight: bold;">✓</span> ${steps[i].text}`;
       }
     }
 
@@ -70,7 +76,7 @@ const UI = {
       await callback();
     }
 
-    overlay.classList.remove("active");
+    modal.classList.remove("active");
   },
 
   /**
@@ -79,19 +85,58 @@ const UI = {
   getProvenanceBadge(source) {
     const isSynthetic = (source || "").toUpperCase().includes("SYNTHETIC");
     if (isSynthetic) {
-      return '<span class="badge badge-synthetic">Synthetic Demonstration Data</span>';
+      return '<span class="badge badge-warning">Synthetic Demonstration Data</span>';
     }
-    return '<span class="badge badge-literature">Literature-Backed</span>';
+    return '<span class="badge badge-green">Literature-Backed</span>';
   },
 
   /**
-   * Return color-coded score class.
+   * Initialize global listeners for tooltips, accordions, and mobile navigation.
    */
-  getScoreColorClass(score) {
-    if (score >= 80) return "score-fill-high";
-    if (score >= 50) return "score-fill-mid";
-    return "score-fill-low";
-  },
+  initGlobalComponents() {
+    // Mobile navigation toggle
+    const toggleBtn = document.getElementById("mobile-toggle");
+    const navMenu = document.getElementById("nav-menu");
+    if (toggleBtn && navMenu) {
+      toggleBtn.addEventListener("click", () => {
+        const isExpanded = toggleBtn.getAttribute("aria-expanded") === "true";
+        toggleBtn.setAttribute("aria-expanded", !isExpanded);
+        navMenu.style.display = isExpanded ? "none" : "flex";
+        navMenu.style.flexDirection = "column";
+        navMenu.style.gap = "0.75rem";
+      });
+    }
+
+    // Generic accordion handlers
+    document.querySelectorAll(".accordion-header").forEach(header => {
+      header.addEventListener("click", () => {
+        const parent = header.closest(".accordion");
+        if (parent) {
+          parent.classList.toggle("open");
+          const icon = header.querySelector("span:last-child");
+          if (icon) {
+            icon.textContent = parent.classList.contains("open") ? "−" : "+";
+          }
+        }
+      });
+    });
+
+    // Tooltips setup
+    document.querySelectorAll(".tooltip-btn").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const tipText = btn.getAttribute("data-tooltip");
+        if (tipText) {
+          UI.showToast(tipText, "info");
+        }
+      });
+    });
+  }
 };
 
 window.UI = UI;
+
+document.addEventListener("DOMContentLoaded", () => {
+  UI.initGlobalComponents();
+});

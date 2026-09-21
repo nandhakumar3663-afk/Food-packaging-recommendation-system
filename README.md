@@ -35,16 +35,23 @@ Developed and tested for local execution on:
 - Automatic recommendation persistence in SQLite history.
 
 ### Phase 3: Frontend Web Application & User Experience
-- Responsive, modern dashboard design system in Vanilla CSS (`static/css/style.css`).
-- Modular JavaScript architecture (`api.js`, `ui.js`, `analyze.js`, `results.js`, `compare.js`, `history.js`).
-- Complete user flow:
-  1. **Home (`/home`)**: Mission, 4-step workflow, feature cards, and technical architecture.
-  2. **Analyze (`/analyze`)**: Food property inputs, instant preset loader, live client-side validation, and simulated progressive loading modal.
-  3. **Results (`/results`)**: Recommended Match hero card, project-defined compatibility score (0 - 100%), 7 subscore progress bars, "Why this recommendation?" explanations, triggered rules breakdown, and 3 alternative matches.
-  4. **Compare (`/compare`)**: Live search and category-filtered packaging materials matrix with barrier specifications and provenance badges.
-  5. **History (`/history`)**: SQLite evaluation audit log with limit selector and detail navigation.
-  6. **Report (`/report/<rec_id>`)**: Clean, printer-friendly evaluation audit report with `@media print` styling.
-- 50 automated tests (unit + API integration + page templates) passing in under 0.4 seconds.
+- Responsive web application built with Vanilla HTML5, CSS3, and JavaScript.
+- Home, Analyze, Results, Compare, History, and Printable Report pages.
+- Client-side validation and multi-step progress simulation.
+
+### Phase 4: Machine Learning Integration & Complete UI/UX Redesign
+- **Lightweight CPU Machine Learning**:
+  - `RandomForestClassifier` (100 Trees, CPU-only) and `XGBClassifier` (`tree_method="hist"`).
+  - Feature engineering pipeline (10 properties: moisture, fat, pH, respiration, temperature, RH, shelf life, sensitivities).
+  - 144-record dataset explicitly stamped `SYNTHETIC DEMONSTRATION DATA`.
+  - Artifact persistence in `ml/artifacts/` with sub-millisecond inference and zero runtime server retraining.
+  - Hybrid AI architecture: Domain Rules $\rightarrow$ ML Probability Ranking $\rightarrow$ Rule Veto Guarantee $\rightarrow$ Multi-criteria Blend.
+- **Complete UI/UX Redesign**:
+  - Fresh, eco-friendly light-green visual theme with centralized CSS custom properties.
+  - Answers 3 core questions immediately: *What do I enter? What did the system find? Why did it recommend this?*
+  - 4-step progressive disclosure wizard on `/analyze` with food preset loader and inline units.
+  - Plain-English explanations, score progress bars, ML assessment disclosures, and collapsible technical accordions.
+  - 55 automated tests passing in under 2 seconds.
 
 ---
 
@@ -145,17 +152,19 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 3. Initialize SQLite Database
+### 3. Initialize SQLite Database & Seed Data
 ```bash
 python scripts/init_db.py
-```
-*Creates `data/packaging_system.db` with tables (`food`, `packaging_material`, `storage`, `recommendation`) and indices.*
-
-### 4. Seed Database with Curated Records
-```bash
 python scripts/seed_data.py
 ```
-*Validates and inserts 12 packaging materials and 10 food commodities.*
+
+### 4. Prepare Dataset & Train ML Models (CPU-Only)
+```bash
+python ml/training/prepare_dataset.py
+python ml/training/train_random_forest.py
+python ml/training/train_xgboost.py
+```
+*Generates the 144-record demonstration dataset and trains Random Forest and XGBoost in `ml/artifacts/`.*
 
 ### 5. Start Flask Server
 ```bash
@@ -165,15 +174,15 @@ python run.py
 
 Open your web browser and navigate to:
 - `http://127.0.0.1:5000/` or `http://127.0.0.1:5000/home` (Home Overview)
-- `http://127.0.0.1:5000/analyze` (Run Packaging Analysis)
-- `http://127.0.0.1:5000/compare` (Materials Catalog Matrix)
+- `http://127.0.0.1:5000/analyze` (Run Step-by-Step Packaging Analysis)
+- `http://127.0.0.1:5000/compare` (Materials Comparison Matrix)
 - `http://127.0.0.1:5000/history` (Recommendation Audit History)
 
-### 6. Run Test Suite
+### 6. Run Automated Test Suite
 ```bash
 python -m pytest tests/ -v
 ```
-*Runs all 50 unit, integration, and template tests.*
+*Runs all 55 unit, integration, template, and ML tests in under 2 seconds.*
 
 ---
 

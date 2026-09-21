@@ -1,197 +1,158 @@
 {% extends "base.html" %}
 
-{% block title %}Recommendation Results - Smart Food Packaging AI{% endblock %}
+{% block title %}Recommendation Results | Smart Food Packaging{% endblock %}
 
 {% block content %}
-<div id="no-results-message" style="display:none; text-align:center; padding:4rem 0;">
-  <div style="font-size:3rem; margin-bottom:1rem;">📋</div>
-  <h2 style="color:#fff; margin-bottom:0.5rem;">No Active Recommendation Found</h2>
-  <p style="color:var(--text-secondary); max-width:500px; margin:0 auto 1.5rem auto;">
-    Please run a new packaging analysis from the form or select a record from your evaluation history.
-  </p>
-  <a href="/analyze" class="btn btn-primary">Start New Analysis →</a>
-</div>
+<div class="results-container" style="max-width: 900px; margin: 0 auto;">
 
-<div id="results-container" style="display:none;">
-
-  <!-- Summary Banner -->
-  <div class="card" style="margin-bottom:2rem; background:rgba(28, 39, 76, 0.5); border-color:var(--border-color);">
-    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1.5rem;">
+  <!-- Page Header -->
+  <div class="section-header" style="margin-bottom: 1.5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
       <div>
-        <span class="badge badge-cyan" style="margin-bottom:0.5rem;">Analysis Summary</span>
-        <h1 id="res-food-name" style="font-size:1.85rem; color:#fff; margin-bottom:0.25rem;">-</h1>
-        <p style="font-size:0.875rem; color:var(--text-secondary); margin:0;">
-          Category: <span id="res-food-category" style="color:#fff; font-weight:600;">-</span>
+        <span class="badge badge-green" style="margin-bottom: 0.5rem;">Analysis Complete</span>
+        <h1 class="page-title">Recommendation Results</h1>
+        <p class="page-subtitle" id="food-summary-line">
+          Evaluating optimal packaging materials for your food product.
         </p>
       </div>
-
-      <div style="display:flex; gap:2rem; flex-wrap:wrap;">
-        <div>
-          <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Target Shelf Life</span>
-          <strong id="res-shelf-life" style="color:#fff; font-size:1.1rem;">-</strong>
-        </div>
-        <div>
-          <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Storage Temperature</span>
-          <strong id="res-storage-temp" style="color:#fff; font-size:1.1rem;">-</strong>
-        </div>
-        <div>
-          <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Storage Humidity</span>
-          <strong id="res-storage-rh" style="color:#fff; font-size:1.1rem;">-</strong>
-        </div>
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <a href="/report" id="btn-view-report" class="btn btn-secondary btn-sm">
+          <span>📄</span> Printable Report
+        </a>
+        <a href="/analyze" class="btn btn-outline btn-sm">
+          <span>🔄</span> New Analysis
+        </a>
       </div>
     </div>
   </div>
 
-  <!-- Primary Recommended Match (Hero Card) -->
-  <div class="card card-hero" style="margin-bottom:2rem; padding:2rem;">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1.5rem; margin-bottom:1.5rem;">
+  <!-- Primary Recommendation Card (Hero Match) -->
+  <section class="hero-match-card" id="primary-recommendation-section">
+    <div class="match-header">
       <div>
-        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
-          <span class="badge badge-emerald">PRIMARY RECOMMENDATION</span>
-          <span id="hero-provenance-badge"></span>
+        <span class="badge badge-green" style="margin-bottom: 0.5rem;">🌟 RECOMMENDED MATCH</span>
+        <h2 class="match-name" id="rec-material-name">Loading recommended material...</h2>
+        <span class="badge badge-neutral" id="rec-material-category" style="margin-top: 0.4rem;">Category</span>
+      </div>
+
+      <div class="match-score-badge">
+        <div class="match-score-num" id="rec-score">--%</div>
+        <div class="match-score-label">
+          Project-defined score
+          <button type="button" class="tooltip-btn" data-tooltip="This is a project-defined compatibility score calculated using multi-attribute packaging criteria and ML confidence. It is not a laboratory physical test guarantee.">ℹ️</button>
         </div>
-        <h2 id="hero-material-name" style="font-size:1.85rem; color:#fff; margin-bottom:0.25rem;">-</h2>
-        <p id="hero-material-cat" style="color:var(--text-muted); font-size:0.95rem; margin:0;">-</p>
-      </div>
-
-      <div style="text-align:right; min-width:200px;">
-        <span style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; display:block;">
-          Project-Defined Compatibility Score
-        </span>
-        <div id="hero-score-val" style="font-size:2.75rem; font-weight:800; color:var(--accent-emerald); line-height:1.1;">
-          0.00%
-        </div>
-        <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-top:0.25rem;">
-          Multi-attribute weighted index (0 - 100)
-        </span>
       </div>
     </div>
 
-    <!-- Specifications Grid -->
-    <div class="grid-3" style="margin-bottom:1.5rem; background:rgba(0,0,0,0.2); padding:1rem; border-radius:var(--radius-md);">
-      <div>
-        <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Oxygen Transmission (OTR)</span>
-        <strong id="spec-otr" style="color:#fff; font-size:0.95rem;">-</strong>
-      </div>
-      <div>
-        <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Water Vapor Transmission (WVTR)</span>
-        <strong id="spec-wvtr" style="color:#fff; font-size:0.95rem;">-</strong>
-      </div>
-      <div>
-        <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Film Thickness</span>
-        <strong id="spec-thickness" style="color:#fff; font-size:0.95rem;">-</strong>
-      </div>
-      <div>
-        <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Estimated Material Cost</span>
-        <strong id="spec-cost" style="color:var(--accent-emerald); font-size:0.95rem;">-</strong>
-      </div>
-      <div>
-        <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Post-Consumer Recyclability</span>
-        <strong id="spec-recyc" style="color:#fff; font-size:0.95rem;">-</strong>
-      </div>
-      <div>
-        <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Bio-Based Renewable Content</span>
-        <strong id="spec-renew" style="color:#fff; font-size:0.95rem;">-</strong>
-      </div>
-    </div>
-
-    <!-- Source Citation -->
-    <div style="font-size:0.8rem; color:var(--text-muted); padding-top:0.75rem; border-top:1px solid rgba(255,255,255,0.08);">
-      <strong>Provenance Reference:</strong> <span id="hero-source-cite">-</span>
-      <a id="hero-source-link" href="#" target="_blank" style="margin-left:0.5rem; display:none;">[View Source]</a>
-    </div>
-  </div>
-
-  <!-- Detailed Analysis Grid -->
-  <div class="grid-2" style="margin-bottom:2.5rem;">
-
-    <!-- Subscores Visual Card -->
-    <div class="card">
-      <h3 style="font-size:1.1rem; color:#fff; margin-bottom:1.25rem;">📊 Compatibility Subscores</h3>
-
-      <div class="score-bar-group">
-        <div class="score-bar-label"><span>Oxygen Barrier Adequacy</span><span id="val-oxygen">0%</span></div>
-        <div class="score-bar-track"><div id="bar-oxygen" class="score-bar-fill" style="width:0%;"></div></div>
-      </div>
-
-      <div class="score-bar-group">
-        <div class="score-bar-label"><span>Moisture Barrier Adequacy</span><span id="val-moisture">0%</span></div>
-        <div class="score-bar-track"><div id="bar-moisture" class="score-bar-fill" style="width:0%;"></div></div>
-      </div>
-
-      <div class="score-bar-group">
-        <div class="score-bar-label"><span>Target Shelf-Life Alignment</span><span id="val-shelf">0%</span></div>
-        <div class="score-bar-track"><div id="bar-shelf" class="score-bar-fill" style="width:0%;"></div></div>
-      </div>
-
-      <div class="score-bar-group">
-        <div class="score-bar-label"><span>Mechanical Strength</span><span id="val-mech">0%</span></div>
-        <div class="score-bar-track"><div id="bar-mech" class="score-bar-fill" style="width:0%;"></div></div>
-      </div>
-
-      <div class="score-bar-group">
-        <div class="score-bar-label"><span>Hermetic Sealability</span><span id="val-seal">0%</span></div>
-        <div class="score-bar-track"><div id="bar-seal" class="score-bar-fill" style="width:0%;"></div></div>
-      </div>
-
-      <div class="score-bar-group">
-        <div class="score-bar-label"><span>Sustainability (Recyclability + Bio-content)</span><span id="val-sust">0%</span></div>
-        <div class="score-bar-track"><div id="bar-sust" class="score-bar-fill" style="width:0%;"></div></div>
-      </div>
-
-      <div class="score-bar-group">
-        <div class="score-bar-label"><span>Economic Cost Efficiency</span><span id="val-cost">0%</span></div>
-        <div class="score-bar-track"><div id="bar-cost" class="score-bar-fill" style="width:0%;"></div></div>
-      </div>
-    </div>
-
-    <!-- Explanations & Rules Card -->
-    <div class="card">
-      <h3 style="font-size:1.1rem; color:#fff; margin-bottom:1rem;">💡 Why This Recommendation?</h3>
-      <ul id="reasons-list" style="padding-left:1.25rem; font-size:0.875rem; color:var(--text-secondary); margin-bottom:1.5rem;">
-        <li>Loading justification...</li>
-      </ul>
-
-      <h4 style="font-size:0.95rem; color:#fff; margin-bottom:0.75rem;">Triggered Domain Rules</h4>
-      <div id="triggered-rules-list"></div>
-    </div>
-
-  </div>
-
-  <!-- Active Warnings (if any) -->
-  <div id="warnings-container" class="card" style="display:none; margin-bottom:2.5rem; border-color:var(--accent-amber); background:rgba(245, 158, 11, 0.08);">
-    <h3 style="font-size:1.05rem; color:var(--accent-amber); margin-bottom:0.5rem; display:flex; align-items:center; gap:0.5rem;">
-      <span>⚠️</span> System Warnings & Domain Notes
-    </h3>
-    <ul id="warnings-list" style="padding-left:1.25rem; font-size:0.875rem; color:var(--text-secondary);"></ul>
-  </div>
-
-  <!-- Neutral Alternatives Section -->
-  <div style="margin-bottom:3rem;">
-    <h2 style="font-size:1.45rem; color:#fff; margin-bottom:0.5rem;">Alternative Material Matches</h2>
-    <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1.5rem;">
-      Alternative packaging options evaluated under adjusted cost and sustainability priorities.
+    <!-- Plain-English Summary -->
+    <p id="rec-plain-summary" style="font-size: 1.05rem; color: var(--text-primary); margin-bottom: 1rem; line-height: 1.5;">
+      We found this packaging material to be the most compatible match for the preservation properties and storage conditions you entered.
     </p>
 
-    <div class="grid-3">
-      <div id="alt-match-card" class="card card-alt"></div>
-      <div id="alt-cost-card" class="card card-alt"></div>
-      <div id="alt-sust-card" class="card card-alt"></div>
+    <!-- Why this matches -->
+    <div style="background-color: var(--very-light-green); border-radius: var(--radius-md); padding: 1.25rem; border: 1px solid var(--border-green); margin-bottom: 1.5rem;">
+      <h3 style="font-size: 1rem; font-weight: 700; color: var(--dark-green); margin-bottom: 0.75rem;">
+        Why did the system recommend this?
+      </h3>
+      <ul class="reasons-list" id="rec-reasons-list">
+        <!-- Rendered by results.js -->
+      </ul>
     </div>
-  </div>
 
-  <!-- Bottom Actions -->
-  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; padding-top:1.5rem; border-top:1px solid var(--border-color);">
-    <a href="/analyze" class="btn btn-secondary">← Run Another Analysis</a>
-    <div style="display:flex; gap:1rem;">
-      <a href="/compare" class="btn btn-secondary">Compare All Materials</a>
-      <a id="view-report-btn" href="/report" class="btn btn-primary">Print Detailed Report 🖨️</a>
+    <!-- Machine Learning Assessment Note -->
+    <div id="rec-ml-assessment-box" style="background-color: #ffffff; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem; display: flex; align-items: flex-start; gap: 0.75rem;">
+      <div style="font-size: 1.5rem; line-height: 1;">🤖</div>
+      <div>
+        <strong style="color: var(--dark-green); font-size: 0.95rem;">Machine-Learning Assessment</strong>
+        <p id="rec-ml-summary" style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">
+          The Random Forest candidate model evaluated this item locally on CPU.
+        </p>
+        <span class="badge badge-info" id="rec-ml-status-badge" style="margin-top: 0.4rem; font-size: 0.75rem;">
+          Synthetic Demonstration Data
+        </span>
+      </div>
     </div>
-  </div>
+
+    <!-- Key Factors Considered (Plain-English Rules) -->
+    <div style="margin-bottom: 1.5rem;">
+      <h3 style="font-size: 1rem; font-weight: 700; color: var(--dark-green); margin-bottom: 0.75rem;">
+        Key Factors Considered
+      </h3>
+      <div id="key-factors-container" style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <!-- Rendered by results.js -->
+      </div>
+    </div>
+
+    <!-- Score Breakdown Progress Bars -->
+    <div style="margin-bottom: 1.5rem;">
+      <h3 style="font-size: 1rem; font-weight: 700; color: var(--dark-green); margin-bottom: 0.75rem;">
+        Compatibility Breakdown by Criterion
+      </h3>
+      <div class="score-breakdown-grid" id="score-breakdown-container">
+        <!-- Rendered by results.js -->
+      </div>
+    </div>
+
+    <!-- Collapsible Advanced Technical Details Accordion -->
+    <div class="accordion" id="accordion-technical">
+      <button type="button" class="accordion-header" id="btn-toggle-tech">
+        <span>⚙️ View Technical & Scientific Details</span>
+        <span id="tech-accordion-icon">+</span>
+      </button>
+      <div class="accordion-content" id="content-technical">
+        <h4 style="font-size: 0.95rem; color: var(--dark-green); margin-bottom: 0.75rem;">Barrier & Material Specifications</h4>
+        <div style="overflow-x: auto; margin-bottom: 1.25rem;">
+          <table style="width: 100%; font-size: 0.85rem; border-collapse: collapse; text-align: left;">
+            <thead>
+              <tr style="background: var(--very-light-green); border-bottom: 2px solid var(--border-green);">
+                <th style="padding: 0.5rem;">Property</th>
+                <th style="padding: 0.5rem;">Value</th>
+                <th style="padding: 0.5rem;">Test Condition / Unit</th>
+              </tr>
+            </thead>
+            <tbody id="tech-specs-table-body">
+              <!-- Rendered by results.js -->
+            </tbody>
+          </table>
+        </div>
+
+        <h4 style="font-size: 0.95rem; color: var(--dark-green); margin-bottom: 0.5rem;">Triggered Domain Safety Rules</h4>
+        <ul id="triggered-rules-tech-list" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem; line-height: 1.6;">
+          <!-- Rendered by results.js -->
+        </ul>
+
+        <h4 style="font-size: 0.95rem; color: var(--dark-green); margin-bottom: 0.5rem;">Data Provenance & Literature Citation</h4>
+        <p id="tech-provenance-text" style="font-size: 0.85rem; color: var(--text-secondary);">
+          Loading citation...
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Alternative Packaging Options Section -->
+  <section style="margin-bottom: 3rem;">
+    <h2 style="font-size: 1.35rem; font-weight: 700; color: var(--dark-green); margin-bottom: 0.5rem;">
+      Alternative Packaging Materials
+    </h2>
+    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+      Depending on your packaging budget or sustainability targets, here are alternative viable options:
+    </p>
+
+    <div class="alternatives-grid" id="alternatives-container">
+      <!-- Alternative cards rendered by results.js -->
+    </div>
+  </section>
+
+  <!-- Warnings & Advisory Section -->
+  <section id="warnings-section" style="display: none; margin-bottom: 2rem;">
+    <div class="alert alert-warning" id="warnings-content">
+      <!-- Warnings rendered by results.js -->
+    </div>
+  </section>
 
 </div>
 {% endblock %}
 
-{% block extra_scripts %}
+{% block scripts %}
 <script src="{{ url_for('static', filename='js/results.js') }}"></script>
 {% endblock %}

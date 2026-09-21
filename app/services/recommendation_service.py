@@ -16,6 +16,7 @@ from app.models.database import (
 from app.utils.validation import validate_food_input
 from app.services.rule_engine import RuleEngine
 from app.services.scoring_engine import ScoringEngine
+from ml.inference.predictor import MLPredictor
 
 
 class RecommendationService:
@@ -66,6 +67,7 @@ class RecommendationService:
         self.db_path = db_path or Config.DATABASE_PATH
         self.rule_engine = RuleEngine(rules_path=rules_path or Config.RULES_FILE)
         self.scoring_engine = ScoringEngine()
+        self.ml_predictor = MLPredictor()
 
     def _normalize_input(self, raw_input: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -182,16 +184,33 @@ class RecommendationService:
             food_data, all_materials
         )
 
+        # 5. Machine Learning candidate evaluation & Hard Rule Veto Check
+        ml_result = self.ml_predictor.predict(food_data)
+        top_ml_material = ml_result["top_predicted_material"]
+        ml_probs = ml_result.get("probabilities", {})
+
+        disqualified_map = {d["material"]["material_name"]: d["reasons"] for d in disqualified}
+        rule_veto_occurred = top_ml_material in disqualified_map
+        veto_details = None
+        if rule_veto_occurred:
+            reasons_str = "; ".join(disqualified_map[top_ml_material])
+            veto_details = (
+                f"Machine-learning candidate model suggested '{top_ml_material}', but it was vetoed "
+                f"by domain safety rules ({reasons_str}) to ensure food safety and preservation."
+            )
+
         # Fallback if no materials meet 100% of strict constraints
         evaluation_pool = compatible if compatible else all_materials
         active_warnings = list(rule_summary.get("warnings", []))
+        if veto_details:
+            active_warnings.append(veto_details)
         if not compatible:
             active_warnings.append(
                 "No materials fully satisfied all strict barrier constraints. "
                 "Evaluating closest candidate materials with compromise warnings."
             )
 
-        # 5. Compute multi-criteria scores for candidate pool
+        # 6. Compute multi-criteria scores for candidate pool (hybridizing domain scoring + ML probability)
         scored_candidates = []
         for mat in evaluation_pool:
             default_score = self.scoring_engine.calculate_compatibility(mat, food_data)
@@ -202,13 +221,24 @@ class RecommendationService:
                 mat, food_data, custom_weights=Config.SCORING_WEIGHTS_SUSTAINABILITY_PRIORITY
             )
 
+            cand_ml_prob = ml_probs.get(mat["material_name"], 0.0)
+            # Hybrid compatibility score: 85% domain multi-criteria + 15% ML learned confidence
+            hybrid_score = round(0.85 * default_score.total_score + 0.15 * (cand_ml_prob * 100.0), 2)
+
             reasons = self._format_reasons(
                 mat, food_data, default_score.to_dict(), rule_summary["triggered_rules"]
             )
+            if mat["material_name"] == top_ml_material and not rule_veto_occurred:
+                reasons.append(
+                    f"Supported by machine-learning pattern recognition (model confidence: {round(cand_ml_prob * 100, 1)}%)."
+                )
 
             scored_candidates.append({
                 "material": mat,
-                "compatibility_score": default_score.total_score,
+                "compatibility_score": hybrid_score,
+                "domain_score": default_score.total_score,
+                "ml_confidence": round(cand_ml_prob * 100.0, 1),
+                "is_ml_top_pick": (mat["material_name"] == top_ml_material and not rule_veto_occurred),
                 "cost_priority_score": cost_score.total_score,
                 "sustainability_priority_score": sust_score.total_score,
                 "subscores": {
@@ -225,14 +255,14 @@ class RecommendationService:
                 "warnings": active_warnings,
             })
 
-        # 6. Rank candidates
-        # Recommended Match: highest default overall score
+        # 7. Rank candidates
+        # Recommended Match: highest overall hybrid score
         scored_by_default = sorted(
             scored_candidates, key=lambda x: x["compatibility_score"], reverse=True
         )
         recommended_match = scored_by_default[0]
 
-        # Alternative Match: runner-up in default overall score
+        # Alternative Match: runner-up in overall score
         alternative_match = (
             scored_by_default[1] if len(scored_by_default) > 1 else recommended_match
         )
@@ -257,7 +287,7 @@ class RecommendationService:
             scored_by_sust[0],
         )
 
-        # 7. Persist recommendation in SQLite history
+        # 8. Persist recommendation in SQLite history
         rec_id = insert_recommendation(
             food_id=raw_input.get("food_id"),
             food_name=food_data["food_name"],
@@ -281,7 +311,7 @@ class RecommendationService:
             res.pop("sustainability_priority_score", None)
             return res
 
-        # 8. Build structured response
+        # 9. Build structured response
         response = {
             "success": True,
             "recommendation_id": rec_id,
@@ -299,6 +329,16 @@ class RecommendationService:
             "constraints": rule_summary["constraints"],
             "candidate_count": len(compatible),
             "disqualified_count": len(disqualified),
+            "ml_assessment": {
+                "model_name": ml_result["model_name"],
+                "model_architecture": ml_result["model_architecture"],
+                "top_predicted_material": top_ml_material,
+                "confidence": ml_result["confidence"],
+                "rule_veto_occurred": rule_veto_occurred,
+                "veto_details": veto_details,
+                "training_data_status": ml_result["training_data_status"],
+                "disclaimer": ml_result["disclaimer"],
+            },
             "recommendations": {
                 "recommended_match": clean_candidate(recommended_match, "Recommended Match"),
                 "alternative_match": clean_candidate(alternative_match, "Alternative Match"),

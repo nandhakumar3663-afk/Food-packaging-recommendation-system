@@ -1,77 +1,74 @@
 /**
  * Recommendation History Controller.
- * Displays past analyses log, limit controls, and details navigation.
+ * Renders audit cards and handles empty state cleanly.
  */
 
-document.addEventListener("DOMContentLoaded", async () => {
-  const tbody = document.getElementById("history-tbody");
-  const limitSelect = document.getElementById("history-limit-select");
-  const countDisplay = document.getElementById("history-count");
+document.addEventListener("DOMContentLoaded", async function() {
+  const container = document.getElementById("history-cards-container");
+  const emptyState = document.getElementById("history-empty-state");
 
-  if (!tbody) return;
-
-  async function loadHistory(limit = 20) {
-    try {
-      const data = await API.getHistory(limit);
-      if (data && data.history) {
-        renderHistoryTable(data.history);
+  try {
+    const res = await ApiClient.getHistory(50);
+    if (res && res.success && Array.isArray(res.history)) {
+      if (res.history.length === 0) {
+        if (container) container.style.display = "none";
+        if (emptyState) emptyState.style.display = "block";
+        return;
       }
-    } catch (err) {
-      UI.showToast("Failed to load recommendation history.", "error");
+
+      if (container) {
+        container.innerHTML = "";
+        res.history.forEach(item => {
+          const score = parseFloat(item.compatibility_score || 0).toFixed(1);
+          const dateStr = item.created_at ? new Date(item.created_at).toLocaleString() : "Recent Run";
+
+          const card = document.createElement("div");
+          card.className = "card";
+          card.style.cssText = "display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-left: 4px solid var(--primary-green);";
+
+          card.innerHTML = `
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                <span class="badge badge-green">#${item.recommendation_id}</span>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(dateStr)}</span>
+              </div>
+              <h2 style="font-size: 1.15rem; color: var(--dark-green); margin-bottom: 0.25rem;">
+                ${escapeHtml(item.food_name || "Food Product")}
+              </h2>
+              <p style="font-size: 0.85rem; color: var(--text-secondary);">
+                Category: <strong>${escapeHtml(item.category || "General")}</strong> • Recommended Material: <strong>${escapeHtml(item.material_name || "N/A")}</strong>
+              </p>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 1.25rem;">
+              <div style="text-align: right;">
+                <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">Compatibility</span>
+                <strong style="font-size: 1.25rem; color: var(--dark-green);">${score}%</strong>
+              </div>
+              <a href="/report?id=${item.recommendation_id}" class="btn btn-secondary btn-sm">
+                View Analysis
+              </a>
+            </div>
+          `;
+
+          container.appendChild(card);
+        });
+      }
+    } else {
+      if (container) {
+        container.innerHTML = `<div class="card" style="text-align:center; color:var(--error); padding:2rem;">Could not load history records.</div>`;
+      }
+    }
+  } catch (err) {
+    console.error("Error loading history:", err);
+    if (container) {
+      container.innerHTML = `<div class="card" style="text-align:center; color:var(--error); padding:2rem;">Unable to connect to recommendation history API.</div>`;
     }
   }
 
-  function renderHistoryTable(items) {
-    tbody.innerHTML = "";
-    if (countDisplay) countDisplay.textContent = `Displaying ${items.length} records`;
-
-    if (items.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:2.5rem; color:var(--text-muted);">No recommendation records found in SQLite history. Run a new analysis to populate.</td></tr>';
-      return;
-    }
-
-    items.forEach(row => {
-      const tr = document.createElement("tr");
-      const score = parseFloat(row.compatibility_score) || 0;
-
-      tr.innerHTML = `
-        <td><strong style="color:var(--accent-cyan);">#${row.recommendation_id}</strong></td>
-        <td>
-          <strong style="color:#fff;">${row.food_name}</strong>
-          <span style="display:block; font-size:0.775rem; color:var(--text-muted);">${row.category}</span>
-        </td>
-        <td>
-          <span>${row.material_name}</span>
-          <span style="display:block; font-size:0.775rem; color:var(--text-muted);">${row.material_category || ""}</span>
-        </td>
-        <td>
-          <strong style="color:${score >= 80 ? '#34d399' : (score >= 50 ? '#fbbf24' : '#fb7185')};">
-            ${score.toFixed(2)}%
-          </strong>
-        </td>
-        <td style="max-width:260px; font-size:0.8rem; color:var(--text-secondary);">
-          <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${row.reason}">
-            ${row.reason || "-"}
-          </div>
-        </td>
-        <td style="font-size:0.8rem; color:var(--text-muted); white-space:nowrap;">
-          ${row.created_at || "-"}
-        </td>
-        <td style="white-space:nowrap;">
-          <a href="/results?id=${row.recommendation_id}" class="btn btn-secondary btn-sm" style="margin-right:0.35rem;">View</a>
-          <a href="/report/${row.recommendation_id}" class="btn btn-outline btn-sm">Report</a>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
+  function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
   }
-
-  if (limitSelect) {
-    limitSelect.addEventListener("change", (e) => {
-      loadHistory(parseInt(e.target.value, 10) || 20);
-    });
-  }
-
-  // Initial load
-  loadHistory(20);
 });
