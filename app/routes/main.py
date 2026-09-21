@@ -82,6 +82,12 @@ def report_page(rec_id: int = None):
     return render_template("report.html", rec_id=rec_id)
 
 
+@bp.route("/monitor", methods=["GET"])
+def monitor_page():
+    """Real-time IoT storage monitoring dashboard."""
+    return render_template("monitor.html")
+
+
 @bp.route("/api/health", methods=["GET"])
 def health():
     """Health check endpoint."""

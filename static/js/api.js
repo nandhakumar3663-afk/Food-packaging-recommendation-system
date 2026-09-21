@@ -99,6 +99,69 @@ const API = {
   async getHistoryById(id) {
     return this.request(`/api/history/${id}`);
   },
+
+  // =========================================================================
+  // IoT Telemetry & Monitoring Endpoints
+  // =========================================================================
+
+  /**
+   * Ingest a new sensor reading.
+   */
+  async postIoTReading(payload) {
+    return this.request("/api/iot/readings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  },
+
+  /**
+   * Query historical IoT sensor readings.
+   */
+  async getIoTReadings(params = {}) {
+    const qs = new URLSearchParams();
+    if (params.device_id) qs.append("device_id", params.device_id);
+    if (params.analysis_id) qs.append("analysis_id", params.analysis_id);
+    if (params.limit) qs.append("limit", params.limit);
+    if (params.start_time) qs.append("start_time", params.start_time);
+    if (params.end_time) qs.append("end_time", params.end_time);
+    const query = qs.toString() ? `?${qs.toString()}` : "";
+    return this.request(`/api/iot/readings${query}`);
+  },
+
+  /**
+   * Fetch the most recent IoT sensor reading and evaluation.
+   */
+  async getIoTLatest(deviceId = null, analysisId = null) {
+    const qs = new URLSearchParams();
+    if (deviceId) qs.append("device_id", deviceId);
+    if (analysisId) qs.append("analysis_id", analysisId);
+    const query = qs.toString() ? `?${qs.toString()}` : "";
+    return this.request(`/api/iot/latest${query}`);
+  },
+
+  /**
+   * Fetch list of active/known IoT microcontrollers.
+   */
+  async getIoTDevices() {
+    return this.request("/api/iot/devices");
+  },
+
+  /**
+   * Fetch system-level IoT telemetry status.
+   */
+  async getIoTStatus() {
+    return this.request("/api/iot/status");
+  },
+
+  /**
+   * Fetch real-time monitoring and comparison for a specific analysis ID.
+   */
+  async getIoTAnalysis(analysisId) {
+    return this.request(`/api/iot/analysis/${analysisId}`);
+  },
 };
 
 window.API = API;
+window.ApiClient = API;
+

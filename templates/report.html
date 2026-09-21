@@ -334,10 +334,44 @@
       </div>
     </div>
 
-    <!-- SECTION 16: Assumptions, Model Limitations & Testing Disclaimer -->
+    <!-- SECTION 16: Real-Time IoT Storage Telemetry & Monitoring Audit -->
+    <div style="margin-bottom: 1.75rem;">
+      <h2 style="font-size: 0.95rem; color: var(--dark-green); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-green); padding-bottom: 0.35rem; margin-bottom: 0.75rem;">
+        16. Real-Time IoT Storage Telemetry & Environmental Audit
+      </h2>
+      <div style="background: var(--very-light-green); border: 1px solid var(--border-green); border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 0.75rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+          <strong style="color: var(--dark-green); font-size: 0.9rem;">IoT Condition Audit Status:</strong>
+          <span class="badge badge-neutral" id="rep-iot-badge">NO SENSOR DATA</span>
+        </div>
+        <p id="rep-iot-summary" style="font-size: 0.825rem; color: var(--text-primary); margin-bottom: 0.75rem; line-height: 1.4;">
+          No real-time IoT monitoring stream was linked to this analysis snapshot.
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; font-size: 0.8rem;">
+          <div style="background: #ffffff; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+            <span style="color: var(--text-muted); display: block; font-size: 0.7rem;">Observed Temperature (Min / Avg / Max)</span>
+            <strong id="rep-iot-temp" style="color: var(--text-primary);">--</strong>
+          </div>
+          <div style="background: #ffffff; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+            <span style="color: var(--text-muted); display: block; font-size: 0.7rem;">Observed Humidity (Min / Avg / Max)</span>
+            <strong id="rep-iot-hum" style="color: var(--text-primary);">--</strong>
+          </div>
+          <div style="background: #ffffff; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+            <span style="color: var(--text-muted); display: block; font-size: 0.7rem;">Carbon Dioxide Monitoring</span>
+            <strong id="rep-iot-co2" style="color: var(--text-primary);">Sensor Unavailable</strong>
+          </div>
+        </div>
+      </div>
+      <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0;">
+        * Telemetry Provenance: Sourced directly from local microcontrollers (ESP32) transmitting over HTTP. Clear separation is maintained between laboratory packaging literature benchmarks and observed live sensory data.
+      </p>
+    </div>
+
+    <!-- SECTION 17: Assumptions, Model Limitations & Testing Disclaimer -->
     <div style="border-top: 1px solid var(--border); padding-top: 1rem;">
       <h2 style="font-size: 0.95rem; color: var(--dark-green); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">
-        16. Assumptions, Model Limitations & Laboratory Testing Notice
+        17. Assumptions, Model Limitations & Laboratory Testing Notice
       </h2>
       <p style="font-size: 0.775rem; color: var(--text-muted); line-height: 1.5; margin: 0 0 0.5rem 0;">
         This recommendation is produced by a hybrid expert-system and tabular machine-learning pipeline running in a local CPU environment (AMD Ryzen 5 5500U, 8 GB RAM). Machine learning models were trained on synthetic demonstration patterns to verify hybrid architecture.
@@ -612,6 +646,46 @@ document.addEventListener("DOMContentLoaded", async function() {
     provBadge.className = "badge badge-warning";
   } else {
     provBadge.className = "badge badge-info";
+  }
+
+  // Section 16: IoT Telemetry
+  const reportAnalysisId = fullResult.recommendation_id;
+  if (reportAnalysisId && reportAnalysisId !== "CURRENT") {
+    try {
+      const iotRes = await ApiClient.getIoTAnalysis(reportAnalysisId);
+      if (iotRes && iotRes.success && iotRes.latest_reading) {
+        const assessment = iotRes.assessment || {};
+        const aggs = iotRes.aggregates || {};
+        const badgeEl = document.getElementById("rep-iot-badge");
+        const sumEl = document.getElementById("rep-iot-summary");
+        const tempEl = document.getElementById("rep-iot-temp");
+        const humEl = document.getElementById("rep-iot-hum");
+        const co2El = document.getElementById("rep-iot-co2");
+
+        if (badgeEl) {
+          badgeEl.textContent = assessment.status || "NORMAL";
+          badgeEl.className = assessment.status === "WARNING" ? "badge badge-error" : (assessment.status === "WATCH" ? "badge badge-warning" : "badge badge-green");
+        }
+        if (sumEl) {
+          sumEl.textContent = assessment.reason || assessment.action_advisory || "Storage conditions verified by real-time sensor observation.";
+        }
+        if (tempEl && aggs.temperature && aggs.temperature.avg !== null) {
+          tempEl.textContent = `${aggs.temperature.min}°C / ${aggs.temperature.avg}°C / ${aggs.temperature.max}°C`;
+        }
+        if (humEl && aggs.humidity && aggs.humidity.avg !== null) {
+          humEl.textContent = `${aggs.humidity.min}% / ${aggs.humidity.avg}% / ${aggs.humidity.max}% RH`;
+        }
+        if (co2El) {
+          if (aggs.co2 && aggs.co2.available) {
+            co2El.textContent = `Avg: ${aggs.co2.avg} ppm (${aggs.co2.min} - ${aggs.co2.max} ppm)`;
+          } else {
+            co2El.textContent = "Sensor Unavailable (Not Installed)";
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Could not query IoT telemetry for report:", e);
+    }
   }
 });
 </script>

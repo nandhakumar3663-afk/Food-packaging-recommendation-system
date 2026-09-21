@@ -72,6 +72,27 @@ Developed and tested for local execution on:
   - Automated CLI audit script (`scripts/audit_data.py`).
   - Model metadata and provenance registry (`ml/artifacts/model_metadata.json`).
 
+### Phase 6: IoT-Based Real-Time Storage Monitoring ✅
+- **Real-Time Telemetry Ingestion & Storage**:
+  - Dedicated SQLite `iot_readings` table with indexing on timestamp, device_id, and analysis_id.
+  - REST endpoints (`POST /api/iot/readings`, `GET /api/iot/readings`, `GET /api/iot/latest`, `GET /api/iot/devices`, `GET /api/iot/status`).
+  - Strict input validation rejecting NaN, Infinity, and out-of-physical-range sensor values.
+  - Strict provenance tagging: `SENSOR OBSERVATION` for physical hardware, `SIMULATED SENSOR DATA` for simulator.
+- **Baseline Deviation Evaluator & Non-Defamation Guardrails**:
+  - Multi-tier evaluation: `NORMAL`, `WATCH` (±2°C / ±8% RH), `WARNING` (±5°C / ±15% RH / thermal abuse), `UNKNOWN`.
+  - Non-defamatory notifications: *"Storage condition requires review — observed temperature deviates from analysis baseline."*
+  - Original packaging recommendations remain immutable; reassessment writes a distinct new record.
+  - Missing CO₂ sensor gracefully handled as `"Sensor Unavailable / Not Installed"` without fabricating dummy data.
+- **Web Dashboard & Reporting Integration**:
+  - Real-time dashboard at `/monitor` with live temperature, humidity, CO₂ gauges, and dynamic status badges.
+  - Offline device indicator automatically triggered after 60 seconds of sensor inactivity.
+  - SVG historical trend chart and active recommendation comparison card.
+  - Dynamic Section 16 integration in the printable report on `/report`.
+- **ESP32 Firmware & Local Telemetry Simulator**:
+  - Non-blocking C++ ESP32 firmware (`iot/esp32/smart_packaging_esp32.ino`) with ring-buffer caching for offline recovery.
+  - Standalone Python CLI simulator (`scripts/simulate_iot.py`) supporting normal, watch, and warning modes.
+- **82 Automated Tests Passing**: 100% test pass rate covering validation, SQLite CRUD, retention pruning, monitor states, and API routes.
+
 ---
 
 ## Project Structure
@@ -84,9 +105,10 @@ Food-packaging-recommendation-system/
 │   ├── config.py                 # Configuration & scoring weights across preference profiles
 │   ├── routes/
 │   │   ├── __init__.py
-│   │   ├── main.py               # Template pages and health check routes
+│   │   ├── main.py               # Template pages (/monitor, /analyze, /results, /compare, /history, /report)
 │   │   ├── analysis.py           # POST /api/analyze and GET /api/presets
-│   │   └── recommendation.py     # Foods, materials, and history routes
+│   │   ├── recommendation.py     # Foods, materials, and history routes
+│   │   └── iot.py                # REST endpoints for IoT ingestion, latest status, and pruning
 │   ├── services/
 │   │   ├── __init__.py
 │   │   ├── recommendation_service.py # Orchestrates validation, rules, scoring, profiles, history
@@ -94,15 +116,22 @@ Food-packaging-recommendation-system/
 │   │   ├── scoring_engine.py     # Weighted multi-attribute compatibility scoring
 │   │   ├── cost_service.py       # Cost classification, unit pricing, and benchmarking
 │   │   ├── sustainability_service.py # Project-Defined Sustainability Index
-│   │   └── provenance_service.py # Literature vs Synthetic classification
+│   │   ├── provenance_service.py # Literature vs Synthetic classification
+│   │   └── storage_monitor.py    # Real-time baseline deviation evaluator & aggregates
 │   ├── models/
 │   │   ├── __init__.py
-│   │   ├── database.py           # SQLite connection & CRUD functions
+│   │   ├── database.py           # SQLite connection & CRUD functions (including IoT readings)
 │   │   └── schemas.py            # Dataclasses & schema structures
 │   └── utils/
 │       ├── __init__.py
 │       ├── constants.py          # Enums, scales, units, and categories
-│       └── validation.py         # Input validation layer
+│       ├── validation.py         # Input validation layer for foods & materials
+│       └── iot_validation.py     # Strict sensor validation (NaN/Inf rejection, ranges)
+│
+├── iot/
+│   └── esp32/
+│       ├── smart_packaging_esp32.ino # Non-blocking C++ ESP32 firmware with ring buffer
+│       └── config.h.example          # Wi-Fi and server configuration template
 │
 ├── ml/
 │   ├── artifacts/
@@ -137,24 +166,27 @@ Food-packaging-recommendation-system/
 │   ├── results.html              # 10-tier hierarchy, key packaging reqs, profile comparison
 │   ├── compare.html              # Multi-select checkboxes & side-by-side comparison modal
 │   ├── history.html              # Recommendation history with profile badges & ID lookup
-│   └── report.html               # 16-section professional printable audit report
+│   ├── report.html               # 16-section professional printable audit report
+│   └── monitor.html              # Real-time IoT monitoring dashboard with live SVG chart
 │
 ├── static/
 │   ├── css/
 │   │   └── style.css             # Vanilla CSS design system & print styles
 │   └── js/
-│       ├── api.js                # Centralized REST API client
+│       ├── api.js                # Centralized REST API client (with IoT helper methods)
 │       ├── ui.js                 # Toasts, progress modal, formatting helpers
 │       ├── analyze.js            # Form controller & client validation
 │       ├── results.js            # Results renderer & score visualizer
 │       ├── compare.js            # Catalog matrix filter & side-by-side modal
-│       └── history.js            # Historical log controller with ID lookup
+│       ├── history.js            # Historical log controller with ID lookup
+│       └── monitor.js            # Live telemetry polling, dynamic SVG trend chart, reassessment
 │
 ├── scripts/
 │   ├── init_db.py                # Initializes SQLite database schema & indices
 │   ├── seed_data.py              # Validates and seeds sample records
 │   ├── verify_db.py              # Queries and audits database contents
-│   └── audit_data.py             # Data quality, boundary, and provenance audit script
+│   ├── audit_data.py             # Data quality, boundary, and provenance audit script
+│   └── simulate_iot.py           # Standalone CLI telemetry simulator (normal/watch/warning)
 │
 ├── tests/
 │   ├── test_api.py               # Integration tests for REST API endpoints & templates
@@ -163,7 +195,8 @@ Food-packaging-recommendation-system/
 │   ├── test_rule_engine.py       # YAML rule triggering & filtering tests
 │   ├── test_scoring_engine.py    # Scoring normalization & weight tests
 │   ├── test_ml.py                # ML inference & hybrid veto tests
-│   └── test_e2e_phase5.py        # Phase 5 E2E, profiles, cost, sustainability, audit tests
+│   ├── test_e2e_phase5.py        # Phase 5 E2E, profiles, cost, sustainability, audit tests
+│   └── test_iot.py               # IoT payload validation, CRUD, pruning, monitor states, API tests
 │
 ├── docs/
 │   ├── api.md                    # REST API documentation & schemas
@@ -174,7 +207,10 @@ Food-packaging-recommendation-system/
 │   ├── sustainability.md         # Project-Defined Sustainability Index formula & disclaimer
 │   ├── reporting.md              # 16-section printable report specifications
 │   ├── data_quality.md           # Provenance tiers and audit methodology
-│   └── model_limitations.md      # Disclosures, assumptions, and hardware constraints
+│   ├── model_limitations.md      # Disclosures, assumptions, and hardware constraints
+│   ├── iot_setup.md              # Hardware wiring, ESP32 pinout, flashing guide, and simulator
+│   ├── iot_architecture.md       # Ingestion schema, data pipeline, SQLite schema, retention
+│   └── storage_monitoring.md     # Evaluation matrix, tolerance thresholds, reassessment workflow
 │
 ├── requirements.txt              # CPU-only pinned dependencies
 ├── run.py                        # Local Flask server entry point
@@ -221,14 +257,29 @@ Open your web browser and navigate to:
 - `http://127.0.0.1:5000/compare` (Select & Compare Materials Side-by-Side)
 - `http://127.0.0.1:5000/history` (Audit Prior Analyses with Profile Badges)
 - `http://127.0.0.1:5000/report` (View & Print 16-Section Audit Report)
+- `http://127.0.0.1:5000/monitor` (Real-Time IoT Storage Telemetry Dashboard)
 
-### 6. Run Automated Test Suite
+### 6. Simulate Real-Time IoT Telemetry (Optional)
+In a separate terminal, stream simulated ESP32 environmental sensor packets to the running server:
+```bash
+# Stream 20 normal baseline packets every 2 seconds
+python scripts/simulate_iot.py --mode normal --interval 2 --count 20
+
+# Or simulate cold chain temperature excursion (WATCH / WARNING states)
+python scripts/simulate_iot.py --mode warning --interval 2 --count 15
+```
+Telemetry packets are tagged with provenance `"SIMULATED SENSOR DATA"` and can be monitored live on `/monitor`.
+
+### 7. Run Automated Test Suite
 ```bash
 python -m pytest tests/ -v
 ```
+*Executes all 82 unit and integration tests across API, database, rules, scoring, ML, and IoT.*
 
 ---
 
 ## Scientific & Domain Disclaimer
 
 The compatibility scores and recommendations generated by this software represent **computational estimates derived from published barrier literature and engineering rule heuristics**. They do **not** constitute experimentally certified shelf-life guarantees. Real shelf-life depends on packaging seal integrity, microbiological load, head-space gas ratios, temperature abuse during logistics, and specific food formulation.
+
+Furthermore, real-time IoT storage monitoring notifications indicate environmental deviations from the recommended baseline. The system **never** claims food is spoiled or unsafe without laboratory microbiological testing; condition alerts signify that observed storage parameters warrant inspection and operational review.

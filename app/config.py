@@ -58,6 +58,12 @@ class Config:
         "cost": 0.05,
     }
 
+    # IoT Storage Monitoring Configuration
+    IOT_OFFLINE_THRESHOLD_SECONDS = 60
+    IOT_MAX_QUERY_LIMIT = 100
+    IOT_RETENTION_DAYS = 30
+    IOT_MAX_RECORDS_PER_DEVICE = 5000
+
 
 class TestingConfig(Config):
     """Testing configuration with in-memory or temporary database."""

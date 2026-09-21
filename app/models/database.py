@@ -128,10 +128,30 @@ def init_database(db_path: Optional[Path] = None) -> None:
             );
         """)
 
+        # IoT Storage Readings Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS iot_readings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                device_id TEXT NOT NULL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                temperature REAL NOT NULL,
+                humidity REAL NOT NULL,
+                co2 REAL,
+                analysis_id INTEGER,
+                status TEXT DEFAULT 'NORMAL',
+                source TEXT DEFAULT 'SENSOR OBSERVATION',
+                signal_quality INTEGER,
+                FOREIGN KEY(analysis_id) REFERENCES recommendation(recommendation_id)
+            );
+        """)
+
         # Performance indices
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_food_category ON food(category);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_material_cat ON packaging_material(material_category);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_rec_food ON recommendation(food_id);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_iot_timestamp ON iot_readings(timestamp);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_iot_device ON iot_readings(device_id);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_iot_analysis ON iot_readings(analysis_id);")
 
 
 # =====================================================================
@@ -295,3 +315,196 @@ def get_recommendation_by_id(rec_id: int, db_path: Optional[Path] = None) -> Opt
         """, (rec_id,))
         row = cursor.fetchone()
         return dict(row) if row else None
+
+
+# =====================================================================
+# IoT Storage Monitoring CRUD
+# =====================================================================
+
+def insert_iot_reading(reading_data: Dict[str, Any], db_path: Optional[Path] = None) -> int:
+    """
+    Insert an IoT sensor reading into SQLite.
+    Returns the generated reading id.
+    """
+    with get_db_connection(db_path) as conn:
+        cursor = conn.cursor()
+        
+        # If explicit timestamp provided, insert it; otherwise let SQLite default to CURRENT_TIMESTAMP
+        if reading_data.get("timestamp"):
+            cursor.execute("""
+                INSERT INTO iot_readings (
+                    device_id, timestamp, temperature, humidity, co2,
+                    analysis_id, status, source, signal_quality
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                reading_data["device_id"],
+                reading_data["timestamp"],
+                round(float(reading_data["temperature"]), 2),
+                round(float(reading_data["humidity"]), 2),
+                round(float(reading_data["co2"]), 2) if reading_data.get("co2") is not None else None,
+                reading_data.get("analysis_id"),
+                reading_data.get("status", "NORMAL"),
+                reading_data.get("source", "SENSOR OBSERVATION"),
+                reading_data.get("signal_quality")
+            ))
+        else:
+            cursor.execute("""
+                INSERT INTO iot_readings (
+                    device_id, temperature, humidity, co2,
+                    analysis_id, status, source, signal_quality
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                reading_data["device_id"],
+                round(float(reading_data["temperature"]), 2),
+                round(float(reading_data["humidity"]), 2),
+                round(float(reading_data["co2"]), 2) if reading_data.get("co2") is not None else None,
+                reading_data.get("analysis_id"),
+                reading_data.get("status", "NORMAL"),
+                reading_data.get("source", "SENSOR OBSERVATION"),
+                reading_data.get("signal_quality")
+            ))
+        return cursor.lastrowid
+
+
+def get_latest_iot_reading(
+    device_id: Optional[str] = None,
+    analysis_id: Optional[int] = None,
+    db_path: Optional[Path] = None
+) -> Optional[Dict[str, Any]]:
+    """Fetch the most recent sensor reading matching optional filters."""
+    query = "SELECT * FROM iot_readings WHERE 1=1"
+    params: List[Any] = []
+
+    if device_id:
+        query += " AND device_id = ?"
+        params.append(device_id)
+    if analysis_id is not None:
+        query += " AND analysis_id = ?"
+        params.append(analysis_id)
+
+    query += " ORDER BY timestamp DESC, id DESC LIMIT 1"
+
+    with get_db_connection(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute(query, params)
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+
+def get_iot_readings(
+    device_id: Optional[str] = None,
+    analysis_id: Optional[int] = None,
+    limit: int = 50,
+    start_time: Optional[str] = None,
+    end_time: Optional[str] = None,
+    db_path: Optional[Path] = None
+) -> List[Dict[str, Any]]:
+    """Fetch a bounded chronological list of sensor readings."""
+    # Bounded query limit
+    safe_limit = max(1, min(100, int(limit)))
+
+    query = "SELECT * FROM iot_readings WHERE 1=1"
+    params: List[Any] = []
+
+    if device_id:
+        query += " AND device_id = ?"
+        params.append(device_id)
+    if analysis_id is not None:
+        query += " AND analysis_id = ?"
+        params.append(analysis_id)
+    if start_time:
+        query += " AND timestamp >= ?"
+        params.append(start_time)
+    if end_time:
+        query += " AND timestamp <= ?"
+        params.append(end_time)
+
+    query += " ORDER BY timestamp DESC, id DESC LIMIT ?"
+    params.append(safe_limit)
+
+    with get_db_connection(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        # Return in ascending order for smooth charting
+        result = [dict(row) for row in rows]
+        result.reverse()
+        return result
+
+
+def get_active_devices(
+    offline_threshold_seconds: int = 60,
+    db_path: Optional[Path] = None
+) -> List[Dict[str, Any]]:
+    """
+    List all known IoT devices, their latest reading timestamp,
+    online/offline status, and sensor capabilities.
+    """
+    with get_db_connection(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT 
+                device_id,
+                MAX(timestamp) AS last_seen,
+                COUNT(*) AS total_readings,
+                MAX(CASE WHEN co2 IS NOT NULL THEN 1 ELSE 0 END) AS has_co2,
+                (strftime('%s', 'now') - strftime('%s', MAX(timestamp))) AS seconds_since_ping
+            FROM iot_readings
+            GROUP BY device_id
+            ORDER BY last_seen DESC
+        """)
+        devices = []
+        for row in cursor.fetchall():
+            d = dict(row)
+            sec = d.get("seconds_since_ping")
+            is_online = sec is not None and sec <= offline_threshold_seconds
+            devices.append({
+                "device_id": d["device_id"],
+                "last_seen": d["last_seen"],
+                "total_readings": d["total_readings"],
+                "has_co2": bool(d["has_co2"]),
+                "seconds_since_ping": sec,
+                "status": "ONLINE" if is_online else "OFFLINE"
+            })
+        return devices
+
+
+def prune_iot_readings(
+    retention_days: int = 30,
+    max_records_per_device: int = 5000,
+    db_path: Optional[Path] = None
+) -> int:
+    """
+    Enforce data retention policy:
+    1. Delete records older than retention_days.
+    2. Ensure no device exceeds max_records_per_device.
+    Returns the total count of pruned records.
+    """
+    total_pruned = 0
+    with get_db_connection(db_path) as conn:
+        cursor = conn.cursor()
+        # 1. Prune by age
+        cursor.execute("""
+            DELETE FROM iot_readings 
+            WHERE timestamp < datetime('now', '-' || ? || ' days');
+        """, (retention_days,))
+        total_pruned += cursor.rowcount
+
+        # 2. Prune excess per device if over ceiling
+        cursor.execute("SELECT DISTINCT device_id FROM iot_readings")
+        devices = [row["device_id"] for row in cursor.fetchall()]
+        
+        for dev in devices:
+            cursor.execute("""
+                DELETE FROM iot_readings
+                WHERE id IN (
+                    SELECT id FROM iot_readings
+                    WHERE device_id = ?
+                    ORDER BY timestamp DESC, id DESC
+                    LIMIT -1 OFFSET ?
+                );
+            """, (dev, max_records_per_device))
+            total_pruned += cursor.rowcount
+
+    return total_pruned
+

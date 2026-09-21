@@ -26,10 +26,12 @@ def create_app(config_class=Config) -> Flask:
     from app.routes.main import bp as main_bp
     from app.routes.analysis import bp as analysis_bp
     from app.routes.recommendation import bp as recommendation_bp
+    from app.routes.iot import bp as iot_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(analysis_bp)
     app.register_blueprint(recommendation_bp)
+    app.register_blueprint(iot_bp)
 
     # Centralized JSON Error Handling
     @app.errorhandler(400)
