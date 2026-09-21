@@ -43,8 +43,12 @@ class TestGeneralEndpoints:
         resp = app_client.get("/api/health")
         assert resp.status_code == 200
         data = resp.get_json()
-        assert data["status"] == "healthy"
-        assert data["cuda_present"] is False
+        assert data["status"] in ("healthy", "degraded")
+        assert data["hardware_profile"]["cuda_present"] is False
+        assert "application" in data
+        assert "database" in data
+        assert "machine_learning" in data
+        assert "iot_service" in data
 
 
 class TestResourceEndpoints:

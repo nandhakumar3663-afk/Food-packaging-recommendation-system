@@ -11,7 +11,7 @@
       SMART FOOD PACKAGING<br>RECOMMENDATION SYSTEM
     </h1>
     <p style="font-size: 1.15rem; color: var(--text-secondary); max-width: 680px; margin: 0 auto 2rem; line-height: 1.6;">
-      Find packaging options that match your food, storage conditions, shelf-life needs, cost, and sustainability goals.
+      AI-assisted packaging selection based on food properties, storage conditions, cost, sustainability, and packaging barrier requirements.
     </p>
     <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
       <a href="/analyze" class="btn btn-primary btn-lg" id="cta-start-analysis">
@@ -90,6 +90,45 @@
           </p>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- Data Transparency Section -->
+  <section style="margin-bottom: 2.5rem;">
+    <div class="card" style="border-left: 4px solid var(--primary-green);">
+      <h2 style="font-size: 1.3rem; color: var(--dark-green); margin-bottom: 0.75rem;">📊 Data Transparency</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <div>
+          <strong style="color: var(--text-primary); font-size: 0.9rem;">Literature-Backed Data</strong>
+          <p style="font-size: 0.825rem; color: var(--text-secondary); margin-top: 0.2rem;">Barrier properties sourced from Robertson (2012) and Massey (2003).</p>
+        </div>
+        <div>
+          <strong style="color: var(--text-primary); font-size: 0.9rem;">Synthetic Demonstration Data</strong>
+          <p style="font-size: 0.825rem; color: var(--text-secondary); margin-top: 0.2rem;">ML training records are explicitly labeled as synthetic demonstration data.</p>
+        </div>
+        <div>
+          <strong style="color: var(--text-primary); font-size: 0.9rem;">Simulated Sensor Data</strong>
+          <p style="font-size: 0.825rem; color: var(--text-secondary); margin-top: 0.2rem;">IoT telemetry is generated via simulator. Physical hardware validation is pending.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- IoT Monitoring Overview -->
+  <section style="margin-bottom: 2.5rem;">
+    <div class="card card-green">
+      <h2 style="font-size: 1.3rem; color: var(--dark-green); margin-bottom: 0.75rem;">🌡️ Real-Time Storage Monitoring</h2>
+      <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1rem;">
+        After packaging selection, monitor storage conditions in real time. The IoT dashboard tracks temperature, humidity, and CO₂ levels, alerting when conditions drift from the recommended baseline.
+      </p>
+      <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <span class="badge badge-green">✅ NORMAL</span>
+        <span class="badge" style="background: var(--warning-bg); color: var(--warning);">⚠️ WATCH</span>
+        <span class="badge" style="background: var(--error-bg); color: var(--error);">🔴 WARNING</span>
+      </div>
+      <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.75rem;">
+        <a href="/monitor" style="color: var(--primary-green); text-decoration: underline;">Open Storage Monitor →</a>
+      </p>
     </div>
   </section>
 

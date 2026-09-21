@@ -1,10 +1,43 @@
 """
 Application factory for the Smart Food Packaging Recommendation System.
+Phase 8 — Final Release.
 """
 
 import logging
+import os
 from flask import Flask, jsonify
 from app.config import Config
+
+
+def _configure_logging(app: Flask):
+    """Configure structured application logging.
+
+    Logs API errors, IoT ingestion events, database errors, model loading,
+    and important system events. Never logs passwords, secrets, or credentials.
+    """
+    log_level = logging.DEBUG if app.debug else logging.INFO
+    formatter = logging.Formatter(
+        "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+    # Console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    console_handler.setLevel(log_level)
+
+    # Application logger
+    app.logger.setLevel(log_level)
+    # Remove default handlers to avoid duplicates
+    app.logger.handlers.clear()
+    app.logger.addHandler(console_handler)
+
+    # Configure module-level loggers
+    for module_name in ["app.routes", "app.services", "app.models", "ml.inference"]:
+        module_logger = logging.getLogger(module_name)
+        module_logger.setLevel(log_level)
+        if not module_logger.handlers:
+            module_logger.addHandler(console_handler)
 
 
 def create_app(config_class=Config) -> Flask:
@@ -17,10 +50,9 @@ def create_app(config_class=Config) -> Flask:
     app.config.from_object(config_class)
 
     # Configure structured logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    )
+    _configure_logging(app)
+    app.logger.info("Smart Food Packaging Recommendation System starting...")
+    app.logger.info("Hardware profile: CPU-Only (No CUDA / No NVIDIA)")
 
     # Register Blueprints
     from app.routes.main import bp as main_bp
@@ -63,4 +95,6 @@ def create_app(config_class=Config) -> Flask:
             "error": "An internal server error occurred.",
         }), 500
 
+    app.logger.info("Application factory initialization complete.")
     return app
+

@@ -1,6 +1,7 @@
 # End-to-End System Demonstration Guide
-**Smart Food Packaging Recommendation System — Phase 7**  
-*Target Environment: AMD Ryzen 5 5500U, 8 GB RAM, CPU-Only Execution*
+**Smart Food Packaging Recommendation System — Phase 8 (Final Release)**  
+*Target Environment: AMD Ryzen 5 5500U, 8 GB RAM, CPU-Only Execution*  
+*Physical hardware validation is pending. IoT pipeline validated using simulated sensor telemetry.*
 
 This document outlines the step-by-step walkthrough for evaluating the complete packaging intelligence and real-time IoT storage monitoring pipeline. It can be conducted either interactively via the Web UI (`http://127.0.0.1:5000`) or automatically via the CLI demonstration script (`python scripts/demo.py`).
 

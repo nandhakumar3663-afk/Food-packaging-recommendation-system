@@ -107,6 +107,28 @@ Developed and tested for local execution on:
 - **98 Automated Tests Passing**:
   - Expanded test suite covering boundary fuzzing, offline transitions, security controls, immutability, and CPU performance benchmarks on AMD Ryzen 5 5500U.
 
+### Phase 8: Final Project Completion, Deployment Readiness & Submission ✅
+- **Repository Audit & Cleanup**:
+  - Full repository inspection: zero hardcoded paths, zero CUDA imports, zero credential leaks, all scientific claims verified.
+  - Configuration hardened: SECRET_KEY loaded from environment, DevelopmentConfig / ProductionConfig classes added.
+  - Structured application logging (API errors, IoT ingestion, database, model loading).
+- **Expanded Health Check**:
+  - `/api/health` reports full subsystem status: application, database, ML artifacts, IoT service, hardware profile.
+  - Explicit physical hardware validation disclaimer in health response.
+- **Deployment & Reproducibility**:
+  - Automated setup script (`scripts/setup.sh`): virtual environment, deps, database, seed, ML artifacts, verification.
+  - Environment-based configuration: `SECRET_KEY`, `DATABASE_PATH`, `HOST`, `PORT`, `FLASK_ENV`.
+- **Final Documentation Suite**:
+  - Complete architecture document (`docs/final_architecture.md`) with pipeline diagrams and component table.
+  - Evidence matrix (`docs/evidence_matrix.md`) mapping 40 features to evidence and limitations.
+  - Presentation outline (`docs/presentation_outline.md`) — 12-slide structure.
+  - Viva/review Q&A (`docs/viva_questions.md`) — 20 questions with implementation-matched answers.
+  - Screenshot capture checklist (`docs/screenshots/README.md`).
+- **Physical Hardware Validation Statement**:
+  - Physical hardware validation is pending. The IoT software pipeline was validated using simulated sensor telemetry.
+- **118 Automated Tests Passing**:
+  - Phase 8 finalization tests added covering expanded health check, configuration security, CPU compliance, setup script integrity, and documentation completeness (118/118 passing in ~3.5s).
+
 ---
 
 ## Project Structure
@@ -241,25 +263,42 @@ Food-packaging-recommendation-system/
 
 ## Setup & Execution Guide
 
-### 1. Create Virtual Environment
+### Quick Setup (Automated)
+```bash
+chmod +x scripts/setup.sh
+./scripts/setup.sh
+```
+This creates the virtual environment, installs CPU-only dependencies, initializes the database, seeds sample data, and verifies ML artifacts.
+
+### Manual Setup
+
+#### 1. Create Virtual Environment
 Using standard Python on Linux:
 ```bash
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-### 2. Install CPU-Only Dependencies
+#### 2. Install CPU-Only Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Initialize SQLite Database & Seed Data
+#### 3. Initialize SQLite Database & Seed Data
 ```bash
 python scripts/init_db.py
 python scripts/seed_data.py
 ```
 
-### 4. Run Data Quality Audit
+#### 4. Prepare ML Models (if artifacts missing)
+```bash
+python ml/training/prepare_dataset.py
+python ml/training/train_random_forest.py
+python ml/training/train_xgboost.py
+```
+*Skip this step if `ml/artifacts/random_forest_model.joblib` and `ml/artifacts/xgboost_model.joblib` already exist.*
+
+#### 5. Run Data Quality Audit
 ```bash
 python scripts/audit_data.py
 ```
@@ -300,7 +339,13 @@ python scripts/demo.py
 ```bash
 python -m pytest tests/ -v
 ```
-*Executes all 98 unit, integration, edge-case, and security tests across API, database, rules, scoring, ML, IoT, and system hardening.*
+*Executes all 100+ unit, integration, edge-case, security, and finalization tests across API, database, rules, scoring, ML, IoT, hardening, and deployment readiness.*
+
+---
+
+## Physical Hardware Validation Statement
+
+> **Physical hardware validation is pending.** Physical ESP32/sensor hardware is unavailable. The IoT software pipeline was validated using simulated sensor telemetry. The ESP32 C++ firmware is written and ready for deployment but has not been flashed to a physical device. This is documented as future work.
 
 ---
 

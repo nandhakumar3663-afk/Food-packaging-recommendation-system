@@ -2,9 +2,13 @@
 Main informational, health check, and frontend template page routes.
 """
 
+import os
+import logging
+from pathlib import Path
 from flask import Blueprint, jsonify, render_template, request
 
 bp = Blueprint("main", __name__)
+logger = logging.getLogger(__name__)
 
 
 @bp.route("/", methods=["GET"])
@@ -22,9 +26,9 @@ def index():
     return jsonify({
         "success": True,
         "name": "Smart Food Packaging Recommendation System API",
-        "version": "1.0.0",
+        "version": "2.0.0",
         "status": "online",
-        "mode": "Phase 3 - Frontend & Hybrid Rule/Scoring Engine (No ML / No CUDA)",
+        "mode": "Phase 8 — Final Release (Hybrid Rule + ML, CPU-Only)",
         "endpoints": [
             "/api/foods",
             "/api/materials",
@@ -32,6 +36,10 @@ def index():
             "/api/history",
             "/api/presets",
             "/api/health",
+            "/api/iot/readings",
+            "/api/iot/latest",
+            "/api/iot/devices",
+            "/api/iot/status",
         ],
         "pages": [
             "/",
@@ -41,6 +49,7 @@ def index():
             "/compare",
             "/history",
             "/report",
+            "/monitor",
         ]
     }), 200
 
@@ -90,10 +99,83 @@ def monitor_page():
 
 @bp.route("/api/health", methods=["GET"])
 def health():
-    """Health check endpoint."""
+    """
+    Comprehensive health check endpoint reporting subsystem status.
+    Reports application, database, ML artifacts, IoT service status,
+    and hardware profile.
+    """
+    from app.config import PROJECT_ROOT, DATABASE_PATH
+
+    # --- Database Status ---
+    db_status = "unknown"
+    try:
+        from app.models.database import get_db_connection
+        with get_db_connection(db_path=DATABASE_PATH) as conn:
+            cursor = conn.execute("SELECT COUNT(*) FROM food")
+            food_count = cursor.fetchone()[0]
+            cursor2 = conn.execute("SELECT COUNT(*) FROM packaging_material")
+            material_count = cursor2.fetchone()[0]
+        db_status = "healthy"
+    except Exception as e:
+        logger.error(f"Health check — database error: {e}")
+        db_status = "error"
+        food_count = 0
+        material_count = 0
+
+    # --- ML Artifact Status ---
+    ml_artifacts_dir = PROJECT_ROOT / "ml" / "artifacts"
+    rf_model = ml_artifacts_dir / "random_forest_model.joblib"
+    xgb_model = ml_artifacts_dir / "xgboost_model.joblib"
+    label_enc = ml_artifacts_dir / "label_encoder.joblib"
+    ml_status = "healthy" if (rf_model.exists() and xgb_model.exists() and label_enc.exists()) else "missing_artifacts"
+
+    # --- IoT Service Status ---
+    iot_status = "available"
+    try:
+        from app.models.database import get_active_devices
+        devices = get_active_devices(offline_threshold_seconds=60, db_path=DATABASE_PATH)
+        iot_device_count = len(devices)
+        iot_online = sum(1 for d in devices if d["status"] == "ONLINE")
+    except Exception:
+        iot_status = "error"
+        iot_device_count = 0
+        iot_online = 0
+
     return jsonify({
-        "status": "healthy",
-        "cpu_target": "AMD Ryzen 5 5500U",
-        "cuda_present": False,
-        "database": "SQLite",
+        "status": "healthy" if db_status == "healthy" else "degraded",
+        "version": "2.0.0",
+        "phase": "Phase 8 — Final Release",
+        "application": {
+            "status": "running",
+            "framework": "Flask",
+            "execution_mode": "CPU-Only",
+        },
+        "database": {
+            "status": db_status,
+            "engine": "SQLite",
+            "food_records": food_count,
+            "material_records": material_count,
+        },
+        "machine_learning": {
+            "status": ml_status,
+            "models": ["RandomForest (CPU)", "XGBoost (CPU hist)"],
+            "random_forest_artifact": rf_model.exists(),
+            "xgboost_artifact": xgb_model.exists(),
+            "label_encoder_artifact": label_enc.exists(),
+            "runtime_retraining": False,
+        },
+        "iot_service": {
+            "status": iot_status,
+            "registered_devices": iot_device_count,
+            "online_devices": iot_online,
+            "hardware_validation": "Physical hardware validation is pending. "
+                                   "The IoT software pipeline was validated using simulated sensor telemetry.",
+        },
+        "hardware_profile": {
+            "cpu_target": "AMD Ryzen 5 5500U",
+            "ram": "8 GB",
+            "gpu": "Integrated AMD Radeon (No NVIDIA / No CUDA)",
+            "cuda_present": False,
+        },
     }), 200
+
