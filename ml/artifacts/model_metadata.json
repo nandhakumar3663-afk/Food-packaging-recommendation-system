@@ -1,0 +1,60 @@
+{
+  "model_name": "Smart Food Packaging Hybrid Classifier",
+  "model_version": "1.0.0",
+  "feature_schema_version": "1.0.0",
+  "trained_timestamp": "2026-09-21T18:00:00Z",
+  "author": "Smart Food Packaging System Team",
+  "hardware_environment": {
+    "target_cpu": "AMD Ryzen 5 5500U",
+    "ram_allocated": "8 GB",
+    "gpu": "None (CPU Execution Only)",
+    "cuda_enabled": false
+  },
+  "models": {
+    "primary": {
+      "name": "RandomForestClassifier",
+      "library": "scikit-learn",
+      "version": "1.9.1",
+      "artifact_file": "random_forest_model.joblib",
+      "test_accuracy": 1.0,
+      "macro_f1": 1.0
+    },
+    "secondary": {
+      "name": "XGBClassifier",
+      "library": "xgboost",
+      "version": "1.7.6",
+      "artifact_file": "xgboost_model.joblib",
+      "test_accuracy": 1.0,
+      "macro_f1": 1.0
+    }
+  },
+  "dataset_provenance": {
+    "source_file": "ml/data/food_packaging_dataset.csv",
+    "total_records": 144,
+    "train_split": 115,
+    "test_split": 29,
+    "provenance_tier": "SYNTHETIC DEMONSTRATION DATA",
+    "disclaimer": "Metrics are computed on a synthetic demonstration dataset designed to verify the ML software pipeline and hybrid rule-engine architecture. These metrics must not be interpreted as experimentally validated physical food shelf-life performance."
+  },
+  "architecture": {
+    "hybrid_design": "Rule-veto pre-filtering followed by ML probability scoring combined with physical compatibility scores",
+    "safety_guarantee": "Vetoed materials by food safety / physiological rules are strictly excluded regardless of ML prediction score",
+    "preference_profiles_supported": [
+      "balanced",
+      "cost_priority",
+      "sustainability_priority"
+    ]
+  },
+  "features": [
+    "moisture",
+    "fat",
+    "ph",
+    "respiration_rate_encoded",
+    "storage_temperature",
+    "storage_rh",
+    "target_shelf_life",
+    "oxygen_sensitivity_encoded",
+    "moisture_sensitivity_encoded",
+    "light_sensitivity_encoded"
+  ]
+}

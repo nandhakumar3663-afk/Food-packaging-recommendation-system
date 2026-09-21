@@ -219,6 +219,9 @@ document.addEventListener("DOMContentLoaded", async function() {
       }
     }
 
+    const profileRadio = document.querySelector('input[name="preference_profile"]:checked');
+    const preferenceProfile = profileRadio ? profileRadio.value : "balanced";
+
     const payload = {
       food_name: document.getElementById("food_name").value.trim(),
       category: document.getElementById("category").value,
@@ -234,6 +237,7 @@ document.addEventListener("DOMContentLoaded", async function() {
       oxygen_sensitivity: document.getElementById("oxygen_sensitivity").value,
       moisture_sensitivity: document.getElementById("moisture_sensitivity").value,
       light_sensitivity: document.getElementById("light_sensitivity").value,
+      preference_profile: preferenceProfile,
     };
 
     const submitBtn = document.getElementById("btn-submit-analysis");

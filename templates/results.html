@@ -3,13 +3,17 @@
 {% block title %}Recommendation Results | Smart Food Packaging{% endblock %}
 
 {% block content %}
-<div class="results-container" style="max-width: 900px; margin: 0 auto;">
+<div class="results-container" style="max-width: 920px; margin: 0 auto;">
 
-  <!-- Page Header -->
+  <!-- Tier 1: Page Header & Active Profile -->
   <div class="section-header" style="margin-bottom: 1.5rem;">
     <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
       <div>
-        <span class="badge badge-green" style="margin-bottom: 0.5rem;">Analysis Complete</span>
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+          <span class="badge badge-green">Analysis Complete</span>
+          <span class="badge badge-neutral" id="rec-profile-badge">Profile: Balanced Performance</span>
+          <span class="badge badge-info" id="rec-provenance-badge">Literature-Backed</span>
+        </div>
         <h1 class="page-title">Recommendation Results</h1>
         <p class="page-subtitle" id="food-summary-line">
           Evaluating optimal packaging materials for your food product.
@@ -26,11 +30,47 @@
     </div>
   </div>
 
-  <!-- Primary Recommendation Card (Hero Match) -->
-  <section class="hero-match-card" id="primary-recommendation-section">
+  <!-- Tier 2: Key Packaging Requirements Card -->
+  <section class="card card-soft-green" style="margin-bottom: 1.75rem; padding: 1.25rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+      <h2 style="font-size: 1.05rem; font-weight: 700; color: var(--dark-green); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+        <span>🎯 Key Packaging Requirements for This Food</span>
+        <button type="button" class="tooltip-btn" data-tooltip="Calculated dynamically based on food moisture, fat rancidity risk, acidity, respiration rate, and target shelf-life.">ℹ️</button>
+      </h2>
+      <span class="badge badge-green" id="req-target-shelf-life">Target: 30 Days</span>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;">
+      <div style="background: #ffffff; padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-green);">
+        <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">Oxygen Barrier Demand</span>
+        <strong id="req-o2-demand" style="color: var(--dark-green); font-size: 0.9rem;">Moderate Barrier</strong>
+      </div>
+      <div style="background: #ffffff; padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-green);">
+        <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">Moisture Vapor Demand</span>
+        <strong id="req-wvtr-demand" style="color: var(--dark-green); font-size: 0.9rem;">Moderate Barrier</strong>
+      </div>
+      <div style="background: #ffffff; padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-green);">
+        <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">Mechanical Protection</span>
+        <strong id="req-mech-demand" style="color: var(--dark-green); font-size: 0.9rem;">Standard Handling</strong>
+      </div>
+      <div style="background: #ffffff; padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-green);">
+        <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">Respiration & Gas Exchange</span>
+        <strong id="req-gas-exchange" style="color: var(--dark-green); font-size: 0.9rem;">Hermetic Seal</strong>
+      </div>
+    </div>
+    <p id="req-summary-text" style="font-size: 0.825rem; color: var(--text-secondary); margin-top: 0.75rem; line-height: 1.4; margin-bottom: 0;">
+      <!-- Generated summary text -->
+    </p>
+  </section>
+
+  <!-- Tier 3: Primary Recommendation Card (Hero Match) -->
+  <section class="hero-match-card" id="primary-recommendation-section" style="margin-bottom: 2rem;">
     <div class="match-header">
       <div>
-        <span class="badge badge-green" style="margin-bottom: 0.5rem;">🌟 RECOMMENDED MATCH</span>
+        <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem;">
+          <span class="badge badge-green">🌟 #1 RECOMMENDED MATCH</span>
+          <span class="badge badge-neutral" id="rec-rank-badge">Top Candidate</span>
+        </div>
         <h2 class="match-name" id="rec-material-name">Loading recommended material...</h2>
         <span class="badge badge-neutral" id="rec-material-category" style="margin-top: 0.4rem;">Category</span>
       </div>
@@ -59,7 +99,51 @@
       </ul>
     </div>
 
-    <!-- Machine Learning Assessment Note -->
+    <!-- Tiers 4 & 5: Cost and Sustainability Intelligence Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+      
+      <!-- Tier 4: Cost Analysis Card -->
+      <div style="background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; border-top: 3px solid var(--primary-green);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--dark-green); margin: 0;">💰 Cost Analysis</h4>
+          <span class="badge badge-neutral" id="cost-tier-badge">Moderate</span>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 0.25rem;">
+          <span style="font-size: 1.4rem; font-weight: 800; color: var(--dark-green);" id="cost-unit-price">$0.000</span>
+          <span style="font-size: 0.8rem; color: var(--text-muted);" id="cost-unit-label">/ unit package (0.05m²)</span>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;" id="cost-per-sqm-text">
+          Material benchmark: $0.00 / m²
+        </p>
+        <div style="background: #f9fbf9; border-radius: var(--radius-sm); padding: 0.4rem 0.6rem; border: 1px dashed var(--border);">
+          <span style="font-size: 0.725rem; color: var(--text-muted); display: block;" id="cost-status-note">
+            ESTIMATED BENCHMARK — NOT A COMMERCIAL QUOTE
+          </span>
+        </div>
+      </div>
+
+      <!-- Tier 5: Sustainability Analysis Card -->
+      <div style="background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; border-top: 3px solid #16a34a;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--dark-green); margin: 0;">🌿 Sustainability Index</h4>
+          <span class="badge badge-green" id="sustainability-index-badge">-- / 100</span>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;" id="sustainability-breakdown-text">
+          Recyclability: --% • Bio-Renewable: --%
+        </p>
+        <p style="font-size: 0.8rem; color: var(--dark-green); font-weight: 600; margin-bottom: 0.5rem;" id="sustainability-pathway-text">
+          End-of-life: Standard municipal sorting
+        </p>
+        <div style="background: #f9fbf9; border-radius: var(--radius-sm); padding: 0.4rem 0.6rem; border: 1px dashed var(--border);">
+          <span style="font-size: 0.725rem; color: var(--text-muted); display: block;">
+            Project-Defined Sustainability Index. Not a certified ISO 14040 lifecycle assessment.
+          </span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Tier 6: Machine Learning Assessment Note -->
     <div id="rec-ml-assessment-box" style="background-color: #ffffff; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem; display: flex; align-items: flex-start; gap: 0.75rem;">
       <div style="font-size: 1.5rem; line-height: 1;">🤖</div>
       <div>
@@ -73,7 +157,7 @@
       </div>
     </div>
 
-    <!-- Key Factors Considered (Plain-English Rules) -->
+    <!-- Tier 7: Key Factors Considered (Plain-English Rules) -->
     <div style="margin-bottom: 1.5rem;">
       <h3 style="font-size: 1rem; font-weight: 700; color: var(--dark-green); margin-bottom: 0.75rem;">
         Key Factors Considered
@@ -83,7 +167,7 @@
       </div>
     </div>
 
-    <!-- Score Breakdown Progress Bars -->
+    <!-- Tier 8: Score Breakdown Progress Bars -->
     <div style="margin-bottom: 1.5rem;">
       <h3 style="font-size: 1rem; font-weight: 700; color: var(--dark-green); margin-bottom: 0.75rem;">
         Compatibility Breakdown by Criterion
@@ -129,8 +213,26 @@
     </div>
   </section>
 
+  <!-- Multi-Objective Profile Comparison Section -->
+  <section class="card" style="margin-bottom: 2.5rem; padding: 1.5rem; border-top: 3px solid var(--primary-green);">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+      <div>
+        <h2 style="font-size: 1.15rem; font-weight: 700; color: var(--dark-green); margin: 0 0 0.25rem 0;">
+          🔄 Cross-Profile Comparison: How Priorities Shift the Recommendation
+        </h2>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">
+          Observe how the top-ranked packaging solution changes depending on organizational objectives:
+        </p>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;" id="profile-comparison-grid">
+      <!-- Profile cards populated by results.js -->
+    </div>
+  </section>
+
   <!-- Alternative Packaging Options Section -->
-  <section style="margin-bottom: 3rem;">
+  <section style="margin-bottom: 2.5rem;">
     <h2 style="font-size: 1.35rem; font-weight: 700; color: var(--dark-green); margin-bottom: 0.5rem;">
       Alternative Packaging Materials
     </h2>
@@ -147,6 +249,26 @@
   <section id="warnings-section" style="display: none; margin-bottom: 2rem;">
     <div class="alert alert-warning" id="warnings-content">
       <!-- Warnings rendered by results.js -->
+    </div>
+  </section>
+
+  <!-- Tier 10: Model Limitations & Operational Scope Panel -->
+  <section class="card card-soft-green" style="margin-bottom: 2.5rem; padding: 1.5rem; border: 1px dashed var(--primary-green);">
+    <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+      <span style="font-size: 1.5rem; line-height: 1;">⚠️</span>
+      <div>
+        <h3 style="font-size: 1rem; font-weight: 700; color: var(--dark-green); margin-bottom: 0.35rem;">
+          Model Limitations & Operational Scope Notice
+        </h3>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0.5rem;">
+          This decision intelligence system is developed for academic and engineering evaluation on standard CPU hardware (AMD Ryzen 5 5500U, 8 GB RAM, no GPU/CUDA acceleration).
+        </p>
+        <ul style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin: 0; padding-left: 1.25rem;">
+          <li><strong>Domain Safety Precedence:</strong> Domain safety rules strictly override machine-learning rankings to prevent hazardous spoilage.</li>
+          <li><strong>Synthetic ML Dataset:</strong> ML models were trained on synthetic demonstration patterns to verify the hybrid algorithmic architecture.</li>
+          <li><strong>Commercial Testing Prerequisite:</strong> Physical shelf-life trials, ASTM/ISO oxygen/water vapor permeation testing, and food contact migration compliance are mandatory before commercial distribution.</li>
+        </ul>
+      </div>
     </div>
   </section>
 

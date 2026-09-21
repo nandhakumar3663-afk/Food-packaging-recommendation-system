@@ -17,6 +17,9 @@ from app.utils.validation import validate_food_input
 from app.services.rule_engine import RuleEngine
 from app.services.scoring_engine import ScoringEngine
 from ml.inference.predictor import MLPredictor
+from app.services.cost_service import CostService
+from app.services.sustainability_service import SustainabilityService
+from app.services.provenance_service import ProvenanceService
 
 
 class RecommendationService:
@@ -156,18 +159,81 @@ class RecommendationService:
 
         return reasons
 
+    @staticmethod
+    def _generate_packaging_requirements(food: Dict[str, Any]) -> Dict[str, str]:
+        """Dynamically generate technical packaging requirements from food preservation chemistry."""
+        # Oxygen requirement
+        if food.get("oxygen_sensitivity") == "High" or food.get("target_shelf_life", 0) >= 180 or food.get("fat", 0) >= 20:
+            o2_req = "High importance (Strict gas barrier required to prevent lipid oxidation/staling)"
+        elif food.get("oxygen_sensitivity") == "Medium":
+            o2_req = "Medium importance (Moderate oxygen barrier protection)"
+        else:
+            o2_req = "Standard / Low importance (Tolerant to ambient oxygen exposure)"
+
+        # Moisture requirement
+        if food.get("moisture_sensitivity") == "High" or food.get("moisture", 50) < 5 or food.get("storage_rh", 50) >= 80:
+            wv_req = "High importance (Low WVTR required to prevent crispness loss or moisture ingress)"
+        elif food.get("moisture_sensitivity") == "Medium":
+            wv_req = "Medium importance (Controlled water vapor barrier)"
+        else:
+            wv_req = "Standard / Low importance"
+
+        # Mechanical strength requirement
+        trans = str(food.get("transport_condition", "Standard Ambient"))
+        if "Cold Chain" in trans or "Frozen" in trans or food.get("target_shelf_life", 0) >= 90:
+            mech_req = "High importance (Puncture resistance, cold-flex integrity, and tear strength)"
+        else:
+            mech_req = "Medium importance (Standard transport handling resistance)"
+
+        # Respiration / Gas exchange requirement
+        cat = str(food.get("category", ""))
+        resp = str(food.get("respiration_rate", "None")).strip().capitalize()
+        if cat == "Produce" or resp in ["High", "Very high"]:
+            gas_req = "Permeable / Micro-perforated (Permits continuous gas exchange to prevent anaerobic decay)"
+        elif resp in ["Low", "Moderate"]:
+            gas_req = "Controlled moderate gas transmission"
+        else:
+            gas_req = "Hermetic seal (Non-respiring barrier seal / MAP retention)"
+
+        shelf_req = f"{food.get('target_shelf_life', 30)} days under {food.get('storage_type', 'Ambient')} storage"
+        summary_text = f"Preservation criteria: {o2_req.split(' (')[0]}; {wv_req.split(' (')[0]}; {gas_req.split(' (')[0]}."
+
+        return {
+            "oxygen_protection": o2_req,
+            "moisture_protection": wv_req,
+            "mechanical_strength": mech_req,
+            "gas_exchange": gas_req,
+            "shelf_life_target": shelf_req,
+            "critical_o2_barrier_needed": o2_req,
+            "critical_wvtr_barrier_needed": wv_req,
+            "mechanical_protection_demand": mech_req,
+            "gas_exchange_demand": gas_req,
+            "preservation_shelf_life_target": shelf_req,
+            "summary_text": summary_text,
+        }
+
     def analyze_and_recommend(
         self, raw_input: Dict[str, Any]
     ) -> Tuple[bool, Optional[Dict[str, Any]], Optional[List[str]]]:
         """
-        Execute full recommendation workflow:
-        Input validation -> Candidate filtering -> Scoring -> Categorization -> DB logging.
-
-        Returns:
-            (is_success, response_data_or_None, error_list_or_None)
+        Execute full multi-objective recommendation workflow:
+        Input validation -> Candidate filtering -> ML inference -> Multi-profile Scoring ->
+        Cost & Sustainability Enrichment -> History logging -> Structured response.
         """
         # 1. Normalize input
         food_data = self._normalize_input(raw_input)
+
+        # Determine user preference profile
+        raw_profile = str(raw_input.get("preference_profile", "balanced")).strip().lower()
+        if raw_profile in ["cost", "cost_priority"]:
+            active_profile = "Cost Priority"
+            profile_key = "cost_priority"
+        elif raw_profile in ["sustainability", "sustainability_priority"]:
+            active_profile = "Sustainability Priority"
+            profile_key = "sustainability_priority"
+        else:
+            active_profile = "Balanced Performance"
+            profile_key = "balanced"
 
         # 2. Validate input
         is_valid, errors = validate_food_input(food_data)
@@ -178,6 +244,9 @@ class RecommendationService:
         all_materials = get_all_materials(db_path=self.db_path)
         if not all_materials:
             return False, None, ["No packaging materials found in database. Please run seed script."]
+
+        # Generate dynamic packaging requirements from food inputs
+        packaging_requirements = self._generate_packaging_requirements(food_data)
 
         # 4. Evaluate domain rules and filter materials
         compatible, disqualified, rule_summary = self.rule_engine.filter_candidates(
@@ -210,10 +279,10 @@ class RecommendationService:
                 "Evaluating closest candidate materials with compromise warnings."
             )
 
-        # 6. Compute multi-criteria scores for candidate pool (hybridizing domain scoring + ML probability)
+        # 6. Compute multi-criteria scores for candidate pool across all 3 preference profiles
         scored_candidates = []
         for mat in evaluation_pool:
-            default_score = self.scoring_engine.calculate_compatibility(mat, food_data)
+            balanced_score = self.scoring_engine.calculate_compatibility(mat, food_data)
             cost_score = self.scoring_engine.calculate_compatibility(
                 mat, food_data, custom_weights=Config.SCORING_WEIGHTS_COST_PRIORITY
             )
@@ -222,12 +291,33 @@ class RecommendationService:
             )
 
             cand_ml_prob = ml_probs.get(mat["material_name"], 0.0)
-            # Hybrid compatibility score: 85% domain multi-criteria + 15% ML learned confidence
-            hybrid_score = round(0.85 * default_score.total_score + 0.15 * (cand_ml_prob * 100.0), 2)
+            hybrid_balanced = round(0.85 * balanced_score.total_score + 0.15 * (cand_ml_prob * 100.0), 2)
+            hybrid_cost = round(0.85 * cost_score.total_score + 0.15 * (cand_ml_prob * 100.0), 2)
+            hybrid_sust = round(0.85 * sust_score.total_score + 0.15 * (cand_ml_prob * 100.0), 2)
+
+            # Active score depends on selected profile
+            if profile_key == "cost_priority":
+                active_score = hybrid_cost
+                active_subscores = cost_score
+            elif profile_key == "sustainability_priority":
+                active_score = hybrid_sust
+                active_subscores = sust_score
+            else:
+                active_score = hybrid_balanced
+                active_subscores = balanced_score
+
+            cost_analysis = CostService.analyze_cost(mat)
+            sustainability_analysis = SustainabilityService.evaluate_sustainability(mat)
+            provenance_info = ProvenanceService.format_material_provenance(mat)
 
             reasons = self._format_reasons(
-                mat, food_data, default_score.to_dict(), rule_summary["triggered_rules"]
+                mat, food_data, active_subscores.to_dict(), rule_summary["triggered_rules"]
             )
+            if profile_key == "cost_priority":
+                reasons.insert(0, f"Prioritized for cost efficiency (${cost_analysis['cost_per_sqm']}/m² - {cost_analysis['cost_tier']}).")
+            elif profile_key == "sustainability_priority":
+                reasons.insert(0, f"Prioritized for circularity (Sustainability Index: {sustainability_analysis['project_sustainability_index']}%).")
+
             if mat["material_name"] == top_ml_material and not rule_veto_occurred:
                 reasons.append(
                     f"Supported by machine-learning pattern recognition (model confidence: {round(cand_ml_prob * 100, 1)}%)."
@@ -235,20 +325,24 @@ class RecommendationService:
 
             scored_candidates.append({
                 "material": mat,
-                "compatibility_score": hybrid_score,
-                "domain_score": default_score.total_score,
+                "compatibility_score": active_score,
+                "domain_score": active_subscores.total_score,
+                "balanced_score": hybrid_balanced,
+                "cost_priority_score": hybrid_cost,
+                "sustainability_priority_score": hybrid_sust,
                 "ml_confidence": round(cand_ml_prob * 100.0, 1),
                 "is_ml_top_pick": (mat["material_name"] == top_ml_material and not rule_veto_occurred),
-                "cost_priority_score": cost_score.total_score,
-                "sustainability_priority_score": sust_score.total_score,
+                "cost_analysis": cost_analysis,
+                "sustainability_analysis": sustainability_analysis,
+                "provenance": provenance_info,
                 "subscores": {
-                    "oxygen": default_score.oxygen_score,
-                    "moisture": default_score.moisture_score,
-                    "mechanical": default_score.mechanical_score,
-                    "sealability": default_score.sealability_score,
-                    "shelf_life": default_score.shelf_life_score,
-                    "sustainability": default_score.sustainability_score,
-                    "cost": default_score.cost_score,
+                    "oxygen": active_subscores.oxygen_score,
+                    "moisture": active_subscores.moisture_score,
+                    "mechanical": active_subscores.mechanical_score,
+                    "sealability": active_subscores.sealability_score,
+                    "shelf_life": active_subscores.shelf_life_score,
+                    "sustainability": active_subscores.sustainability_score,
+                    "cost": active_subscores.cost_score,
                 },
                 "triggered_rules": rule_summary["triggered_rules"],
                 "reasons": reasons,
@@ -256,15 +350,15 @@ class RecommendationService:
             })
 
         # 7. Rank candidates
-        # Recommended Match: highest overall hybrid score
-        scored_by_default = sorted(
+        # Recommended Match: highest score under the active profile
+        scored_by_active = sorted(
             scored_candidates, key=lambda x: x["compatibility_score"], reverse=True
         )
-        recommended_match = scored_by_default[0]
+        recommended_match = scored_by_active[0]
 
-        # Alternative Match: runner-up in overall score
+        # Alternative Match: runner-up in active score
         alternative_match = (
-            scored_by_default[1] if len(scored_by_default) > 1 else recommended_match
+            scored_by_active[1] if len(scored_by_active) > 1 else recommended_match
         )
 
         # Lower-Cost Alternative: highest score under cost-priority profile
@@ -287,7 +381,41 @@ class RecommendationService:
             scored_by_sust[0],
         )
 
-        # 8. Persist recommendation in SQLite history
+        # 8. Profile Comparison across Balanced, Cost, and Sustainability
+        top_balanced = max(scored_candidates, key=lambda x: x["balanced_score"])
+        top_cost = max(scored_candidates, key=lambda x: x["cost_priority_score"])
+        top_sust = max(scored_candidates, key=lambda x: x["sustainability_priority_score"])
+
+        profile_comparison = {
+            "balanced": {
+                "profile_name": "Balanced Performance",
+                "material_name": top_balanced["material"]["material_name"],
+                "score": top_balanced["balanced_score"],
+                "cost_per_sqm": top_balanced["material"]["estimated_cost"],
+                "recyclability": top_balanced["material"]["recyclability"],
+            },
+            "cost_priority": {
+                "profile_name": "Cost Priority",
+                "material_name": top_cost["material"]["material_name"],
+                "score": top_cost["cost_priority_score"],
+                "cost_per_sqm": top_cost["material"]["estimated_cost"],
+                "recyclability": top_cost["material"]["recyclability"],
+            },
+            "sustainability_priority": {
+                "profile_name": "Sustainability Priority",
+                "material_name": top_sust["material"]["material_name"],
+                "score": top_sust["sustainability_priority_score"],
+                "cost_per_sqm": top_sust["material"]["estimated_cost"],
+                "recyclability": top_sust["material"]["recyclability"],
+            },
+        }
+
+        # 9. Persist recommendation in SQLite history
+        snapshot_to_store = dict(food_data)
+        snapshot_to_store["preference_profile"] = active_profile
+        snapshot_to_store["model_version"] = "RandomForest-v1.0 (CPU)"
+        snapshot_to_store["data_status"] = "SYNTHETIC DEMONSTRATION DATA"
+
         rec_id = insert_recommendation(
             food_id=raw_input.get("food_id"),
             food_name=food_data["food_name"],
@@ -299,7 +427,7 @@ class RecommendationService:
             sub_scores=recommended_match["subscores"],
             reason="; ".join(recommended_match["reasons"][:2]),
             triggered_rules=recommended_match["triggered_rules"],
-            input_snapshot=food_data,
+            input_snapshot=snapshot_to_store,
             db_path=self.db_path,
         )
 
@@ -307,11 +435,12 @@ class RecommendationService:
         def clean_candidate(cand_dict: Dict[str, Any], label: str) -> Dict[str, Any]:
             res = dict(cand_dict)
             res["recommendation_type"] = label
+            res.pop("balanced_score", None)
             res.pop("cost_priority_score", None)
             res.pop("sustainability_priority_score", None)
             return res
 
-        # 9. Build structured response
+        # 10. Build structured response
         response = {
             "success": True,
             "recommendation_id": rec_id,
@@ -326,6 +455,9 @@ class RecommendationService:
                     "transport_condition": food_data.get("transport_condition", "Standard Ambient"),
                 },
             },
+            "active_preference_profile": active_profile,
+            "packaging_requirements": packaging_requirements,
+            "profile_comparison": profile_comparison,
             "constraints": rule_summary["constraints"],
             "candidate_count": len(compatible),
             "disqualified_count": len(disqualified),
@@ -357,3 +489,4 @@ class RecommendationService:
         }
 
         return True, response, None
+

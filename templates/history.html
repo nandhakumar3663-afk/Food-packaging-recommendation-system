@@ -3,20 +3,32 @@
 {% block title %}Recommendation History | Smart Food Packaging{% endblock %}
 
 {% block content %}
-<div class="history-container" style="max-width: 900px; margin: 0 auto;">
+<div class="history-container" style="max-width: 920px; margin: 0 auto;">
   <!-- Page Header -->
-  <div class="section-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+  <div class="section-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
     <div>
       <span class="badge badge-green" style="margin-bottom: 0.5rem;">Audit & Prior Runs</span>
       <h1 class="page-title">Recommendation History</h1>
       <p class="page-subtitle">
-        Review past packaging analysis runs, compatibility scores, and decisions stored in the SQLite database.
+        Review past packaging analysis runs, strategic preference profiles, and compatibility scores stored in the SQLite database.
       </p>
     </div>
     <div>
       <a href="/analyze" class="btn btn-primary btn-sm">
         <span>➕</span> New Analysis
       </a>
+    </div>
+  </div>
+
+  <!-- Search & ID Lookup Bar -->
+  <div class="card card-soft-green" style="margin-bottom: 1.5rem; padding: 1rem 1.25rem;">
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+      <div style="flex: 1; min-width: 260px;">
+        <input type="text" id="search-history" class="form-control" placeholder="🔍 Search history by food name or analysis #ID (e.g. #3)...">
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-size: 0.8rem; color: var(--text-muted);" id="history-count-label">Showing records</span>
+      </div>
     </div>
   </div>
 
