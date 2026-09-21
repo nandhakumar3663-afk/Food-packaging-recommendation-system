@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Packaging Materials Comparison - Smart Food Packaging AI{% endblock %}
+
+{% block content %}
+<div>
+  <!-- Header -->
+  <div style="margin-bottom:2rem; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <h1 style="font-size:2.25rem; font-weight:800; color:#fff; margin-bottom:0.5rem; letter-spacing:-0.02em;">
+        Materials Catalog Matrix
+      </h1>
+      <p style="color:var(--text-secondary); font-size:1rem; margin:0;">
+        Compare technical specifications, transmission rates (OTR/WVTR), sustainability metrics, and cost.
+      </p>
+    </div>
+
+    <span id="compare-count" class="badge badge-cyan" style="font-size:0.85rem; padding:0.4rem 0.8rem;">
+      Loading materials...
+    </span>
+  </div>
+
+  <!-- Filter & Search Toolbar -->
+  <div class="card" style="margin-bottom:1.5rem; padding:1.25rem;">
+    <div class="grid-2" style="align-items:center;">
+      <div>
+        <label class="form-label" for="compare-search" style="font-size:0.8rem; color:var(--text-muted);">Search by Material or Polymer</label>
+        <input type="text" id="compare-search" class="form-control" placeholder="Search (e.g. EVOH, PET, PLA, Paper)...">
+      </div>
+
+      <div>
+        <label class="form-label" for="compare-cat-filter" style="font-size:0.8rem; color:var(--text-muted);">Filter by Material Category</label>
+        <select id="compare-cat-filter" class="form-control">
+          <option value="">All Material Categories</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Comparison Table -->
+  <div class="table-responsive" style="margin-bottom:2rem;">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Packaging Material</th>
+          <th>Category & Polymer</th>
+          <th>Oxygen Barrier (OTR)</th>
+          <th>Moisture Barrier (WVTR)</th>
+          <th>Thickness</th>
+          <th>Mechanical</th>
+          <th>Sealability</th>
+          <th>Recyclability</th>
+          <th>Renewable</th>
+          <th>Estimated Cost</th>
+        </tr>
+      </thead>
+      <tbody id="compare-tbody">
+        <tr>
+          <td colspan="10" style="text-align:center; padding:2rem; color:var(--text-muted);">
+            Loading materials catalog from database...
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Technical Note Banner -->
+  <div class="card" style="background:rgba(19, 28, 56, 0.5); font-size:0.825rem; color:var(--text-secondary);">
+    <strong style="color:#fff;">Test Standard Reference:</strong>
+    Standard OTR values tested under ASTM D3985 at 23°C (0% or 50% RH). WVTR values tested under ASTM F1249 at 38°C, 90% RH.
+    Synthetic benchmark materials are explicitly marked for testing transparency.
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/compare.js') }}"></script>
+{% endblock %}

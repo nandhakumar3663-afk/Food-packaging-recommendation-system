@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Smart Food Packaging Recommendation System{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container">
+      <a href="/" class="brand">
+        <div class="brand-icon">📦</div>
+        <span>SmartPackaging<span style="color:var(--accent-cyan);">AI</span></span>
+      </a>
+
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+        ☰
+      </button>
+
+      <ul class="nav-links" id="nav-links">
+        <li><a href="/home" class="nav-link {% if request.path == '/' or request.path == '/home' %}active{% endif %}">Home</a></li>
+        <li><a href="/analyze" class="nav-link {% if request.path == '/analyze' %}active{% endif %}">Analyze</a></li>
+        <li><a href="/results" class="nav-link {% if request.path == '/results' %}active{% endif %}">Results</a></li>
+        <li><a href="/compare" class="nav-link {% if request.path == '/compare' %}active{% endif %}">Compare</a></li>
+        <li><a href="/history" class="nav-link {% if request.path == '/history' %}active{% endif %}">History</a></li>
+        <li><a href="/report" class="nav-link {% if request.path.startswith('/report') %}active{% endif %}">Report</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- Main Body Content -->
+  <main>
+    <div class="container">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <!-- Progressive Loading Overlay -->
+  <div id="loading-overlay" class="modal-overlay">
+    <div class="loading-card">
+      <div class="loading-spinner"></div>
+      <h3 style="margin-bottom:0.5rem; color:#fff;">Analyzing Packaging Compatibility</h3>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.5rem;">
+        Evaluating food chemistry, barrier kinetics, and domain rules...
+      </p>
+      <div id="loading-steps" style="text-align:left;"></div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
+            <div class="brand-icon" style="width:28px; height:28px; font-size:0.9rem;">📦</div>
+            <strong style="color:#fff; font-size:1.05rem;">Smart Food Packaging Recommendation System</strong>
+          </div>
+          <p style="font-size:0.825rem; color:var(--text-secondary); line-height:1.5; margin-bottom:1rem;">
+            A multi-attribute packaging decision system coupling food degradation chemistry, transport conditions, and barrier permeability against verified literature.
+          </p>
+          <span class="disclaimer-badge">Computational Heuristic Model — Not Certified Shelf-Life Guarantees</span>
+        </div>
+
+        <div>
+          <h4 style="color:#fff; font-size:0.95rem; margin-bottom:0.75rem;">System Navigation</h4>
+          <ul style="list-style:none; line-height:2;">
+            <li><a href="/home">Landing Overview</a></li>
+            <li><a href="/analyze">Run Food Analysis</a></li>
+            <li><a href="/compare">Materials Catalog Matrix</a></li>
+            <li><a href="/history">Evaluation Audit History</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 style="color:#fff; font-size:0.95rem; margin-bottom:0.75rem;">Technical Architecture</h4>
+          <p style="font-size:0.8rem; line-height:1.7; color:var(--text-muted);">
+            • Platform: CPU-Only (AMD Ryzen 5 5500U)<br>
+            • Database: SQLite 3<br>
+            • Rule Engine: Declarative YAML (R001–R008)<br>
+            • Permeability Units: OTR [cc/(m²·d·atm)], WVTR [g/(m²·d)]
+          </p>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>© 2026 Smart Food Packaging Recommendation System. Designed for local execution.</div>
+        <div style="display:flex; gap:1.5rem;">
+          <a href="/api/health" target="_blank" style="font-size:0.8rem;">API Health Monitor</a>
+          <a href="/api/foods" target="_blank" style="font-size:0.8rem;">Food JSON</a>
+          <a href="/api/materials" target="_blank" style="font-size:0.8rem;">Materials JSON</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
+  <script>
+    // Mobile Navigation Toggle
+    document.getElementById("nav-toggle")?.addEventListener("click", () => {
+      document.getElementById("nav-links")?.classList.toggle("show");
+    });
+  </script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}Packaging Recommendation Audit Report - Smart Food Packaging AI{% endblock %}
+
+{% block content %}
+<div style="max-width:850px; margin:0 auto;">
+
+  <!-- Print Header Toolbar (Hidden during print) -->
+  <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; padding-bottom:1rem; border-bottom:1px solid var(--border-color);">
+    <div>
+      <a href="/results" class="btn btn-secondary btn-sm">← Back to Results</a>
+    </div>
+    <div style="display:flex; gap:1rem;">
+      <button onclick="window.print()" class="btn btn-primary">
+        <span>🖨️</span> Print Report
+      </button>
+    </div>
+  </div>
+
+  <!-- Printable Report Document Container -->
+  <div class="card" style="padding:2.5rem; background:#fff; color:#1e293b; border:1px solid #cbd5e1; box-shadow:var(--shadow-lg);">
+
+    <!-- Header -->
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:1.5rem; border-bottom:2px solid #0f172a; margin-bottom:1.5rem;">
+      <div>
+        <h1 style="font-size:1.65rem; color:#0f172a; font-weight:800; margin-bottom:0.25rem;">
+          SMART FOOD PACKAGING REPORT
+        </h1>
+        <p style="font-size:0.85rem; color:#64748b; margin:0;">
+          Decision Support Analysis & Barrier Compatibility Assessment
+        </p>
+      </div>
+
+      <div style="text-align:right;">
+        <span style="font-size:0.75rem; color:#64748b; text-transform:uppercase;">Audit Transaction ID</span>
+        <div id="rep-rec-id" style="font-size:1.15rem; font-weight:700; color:#0284c7;">#--</div>
+        <span id="rep-date" style="font-size:0.75rem; color:#94a3b8; display:block;">-</span>
+      </div>
+    </div>
+
+    <!-- Section 1: Food & Storage Profile -->
+    <div style="margin-bottom:1.75rem;">
+      <h3 style="font-size:1.05rem; color:#0f172a; margin-bottom:0.75rem; text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid #e2e8f0; padding-bottom:0.35rem;">
+        1. Evaluated Food & Environmental Profile
+      </h3>
+
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:1rem; font-size:0.875rem;">
+        <div>
+          <span style="color:#64748b; display:block; font-size:0.75rem;">Food Commodity</span>
+          <strong id="rep-food-name" style="color:#0f172a;">-</strong>
+        </div>
+        <div>
+          <span style="color:#64748b; display:block; font-size:0.75rem;">Category</span>
+          <strong id="rep-food-cat" style="color:#0f172a;">-</strong>
+        </div>
+        <div>
+          <span style="color:#64748b; display:block; font-size:0.75rem;">Target Shelf Life</span>
+          <strong id="rep-shelf-life" style="color:#0f172a;">-</strong>
+        </div>
+        <div>
+          <span style="color:#64748b; display:block; font-size:0.75rem;">Moisture & Fat Content</span>
+          <strong id="rep-moisture-fat" style="color:#0f172a;">-</strong>
+        </div>
+        <div>
+          <span style="color:#64748b; display:block; font-size:0.75rem;">pH / Respiration</span>
+          <strong id="rep-ph-resp" style="color:#0f172a;">-</strong>
+        </div>
+        <div>
+          <span style="color:#64748b; display:block; font-size:0.75rem;">Storage & Logistics</span>
+          <strong id="rep-storage" style="color:#0f172a;">-</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Recommended Match & Compatibility -->
+    <div style="margin-bottom:1.75rem; background:#f8fafc; border:1px solid #e2e8f0; padding:1.25rem; border-radius:var(--radius-sm);">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
+        <div>
+          <span style="display:inline-block; background:#dcfce7; color:#166534; font-size:0.7rem; font-weight:700; padding:0.2rem 0.5rem; border-radius:4px; margin-bottom:0.35rem;">
+            RECOMMENDED MATCH
+          </span>
+          <h2 id="rep-material-name" style="font-size:1.35rem; color:#0f172a; margin:0;">-</h2>
+          <span id="rep-material-cat" style="font-size:0.8rem; color:#64748b;">-</span>
+        </div>
+
+        <div style="text-align:right;">
+          <span style="font-size:0.7rem; color:#64748b; text-transform:uppercase;">Compatibility Score</span>
+          <div id="rep-score-val" style="font-size:1.85rem; font-weight:800; color:#15803d; line-height:1;">
+            0.00%
+          </div>
+          <span style="font-size:0.65rem; color:#64748b;">Project-defined score</span>
+        </div>
+      </div>
+
+      <!-- Technical Material Properties -->
+      <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:0.75rem; font-size:0.8rem; border-top:1px solid #e2e8f0; padding-top:0.75rem;">
+        <div><span style="color:#64748b;">OTR:</span> <strong id="rep-otr">-</strong></div>
+        <div><span style="color:#64748b;">WVTR:</span> <strong id="rep-wvtr">-</strong></div>
+        <div><span style="color:#64748b;">Thickness:</span> <strong id="rep-thickness">-</strong></div>
+        <div><span style="color:#64748b;">Cost:</span> <strong id="rep-cost">-</strong></div>
+        <div><span style="color:#64748b;">Recyclability:</span> <strong id="rep-recyc">-</strong></div>
+        <div><span style="color:#64748b;">Renewable Content:</span> <strong id="rep-renew">-</strong></div>
+        <div><span style="color:#64748b;">Mechanical:</span> <strong id="rep-mech">-</strong></div>
+        <div><span style="color:#64748b;">Sealability:</span> <strong id="rep-seal">-</strong></div>
+      </div>
+    </div>
+
+    <!-- Section 3: Subscore Breakdown -->
+    <div style="margin-bottom:1.75rem;">
+      <h3 style="font-size:1.05rem; color:#0f172a; margin-bottom:0.75rem; text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid #e2e8f0; padding-bottom:0.35rem;">
+        2. Compatibility Subscore Breakdown (0 - 100)
+      </h3>
+
+      <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:0.75rem; font-size:0.825rem;">
+        <div style="background:#f1f5f9; padding:0.5rem; border-radius:4px;">
+          <span style="color:#64748b; display:block;">Oxygen Protection</span>
+          <strong id="rep-sub-o2" style="font-size:1rem; color:#0f172a;">-</strong>
+        </div>
+        <div style="background:#f1f5f9; padding:0.5rem; border-radius:4px;">
+          <span style="color:#64748b; display:block;">Moisture Protection</span>
+          <strong id="rep-sub-wv" style="font-size:1rem; color:#0f172a;">-</strong>
+        </div>
+        <div style="background:#f1f5f9; padding:0.5rem; border-radius:4px;">
+          <span style="color:#64748b; display:block;">Shelf Life Alignment</span>
+          <strong id="rep-sub-shelf" style="font-size:1rem; color:#0f172a;">-</strong>
+        </div>
+        <div style="background:#f1f5f9; padding:0.5rem; border-radius:4px;">
+          <span style="color:#64748b; display:block;">Economic Efficiency</span>
+          <strong id="rep-sub-cost" style="font-size:1rem; color:#0f172a;">-</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Justification & Triggered Rules -->
+    <div style="margin-bottom:1.75rem;">
+      <h3 style="font-size:1.05rem; color:#0f172a; margin-bottom:0.75rem; text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid #e2e8f0; padding-bottom:0.35rem;">
+        3. Recommendation Justification & Rules
+      </h3>
+
+      <ul id="rep-reasons" style="padding-left:1.25rem; font-size:0.85rem; color:#334155; margin-bottom:0.75rem; line-height:1.5;">
+      </ul>
+
+      <div id="rep-rules" style="font-size:0.825rem; color:#475569;"></div>
+    </div>
+
+    <!-- Section 5: Provenance & Scientific Disclaimer -->
+    <div style="padding-top:1.25rem; border-top:1px solid #cbd5e1; font-size:0.75rem; color:#64748b; line-height:1.5;">
+      <div style="margin-bottom:0.5rem;">
+        <strong>Data Provenance Citation:</strong> <span id="rep-source">-</span>
+      </div>
+      <div>
+        <strong>Domain Safety Notice:</strong> The compatibility scores generated in this report are computational estimates based on published literature and engineering heuristics. They do not constitute experimentally certified shelf-life guarantees or packaging validation audits.
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  // Determine if recommendation ID is provided in path or query
+  const pathParts = window.location.pathname.split("/");
+  let recId = null;
+  if (pathParts.length > 2 && pathParts[2]) {
+    recId = parseInt(pathParts[2], 10);
+  }
+  if (!recId) {
+    const urlParams = new URLSearchParams(window.location.search);
+    recId = urlParams.get("id");
+  }
+
+  let data = null;
+
+  if (recId) {
+    try {
+      const res = await API.getHistoryById(recId);
+      if (res && res.recommendation) {
+        data = res.recommendation;
+      }
+    } catch (e) {
+      console.warn("Could not fetch history report by ID:", e);
+    }
+  }
+
+  if (!data) {
+    // Fallback to last recommendation in sessionStorage
+    const raw = sessionStorage.getItem("last_packaging_result");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const a = parsed.analysis;
+      const rec = parsed.recommendations.recommended_match;
+      const m = rec.material;
+      data = {
+        recommendation_id: parsed.recommendation_id || "CURRENT",
+        food_name: a.food,
+        category: a.category,
+        material_name: m.material_name,
+        material_category: m.material_category,
+        polymer_type: m.polymer_type,
+        compatibility_score: rec.compatibility_score,
+        otr: m.otr,
+        wvtr: m.wvtr,
+        thickness: m.thickness,
+        estimated_cost: m.estimated_cost,
+        recyclability: m.recyclability,
+        renewable_content: m.renewable_content,
+        mechanical_strength: m.mechanical_strength,
+        sealability: m.sealability,
+        oxygen_score: rec.subscores.oxygen,
+        moisture_score: rec.subscores.moisture,
+        shelf_life_score: rec.subscores.shelf_life,
+        cost_score: rec.subscores.cost,
+        reason: (rec.reasons || []).join("; "),
+        created_at: new Date().toLocaleString(),
+        material_source: m.source,
+        input_snapshot: JSON.stringify(a),
+        triggered_rules: JSON.stringify(rec.triggered_rules || []),
+      };
+    }
+  }
+
+  if (!data) return;
+
+  // Populate Report Fields
+  document.getElementById("rep-rec-id").textContent = `#${data.recommendation_id}`;
+  document.getElementById("rep-date").textContent = data.created_at || new Date().toLocaleString();
+  document.getElementById("rep-food-name").textContent = data.food_name || "-";
+  document.getElementById("rep-food-cat").textContent = data.category || "-";
+
+  let snapshot = {};
+  try { snapshot = typeof data.input_snapshot === "string" ? JSON.parse(data.input_snapshot) : data.input_snapshot; } catch(e){}
+
+  document.getElementById("rep-shelf-life").textContent = `${snapshot.target_shelf_life || 30} days`;
+  document.getElementById("rep-moisture-fat").textContent = `Moisture: ${snapshot.moisture || "-"}% | Fat: ${snapshot.fat || "-"}%`;
+  document.getElementById("rep-ph-resp").textContent = `pH: ${snapshot.ph || "-"} | Respiration: ${snapshot.respiration_rate || "-"}`;
+  document.getElementById("rep-storage").textContent = `${snapshot.storage_temperature || "-"}°C, ${snapshot.storage_rh || "-"}% RH`;
+
+  document.getElementById("rep-material-name").textContent = data.material_name || "-";
+  document.getElementById("rep-material-cat").textContent = `${data.material_category || ""} (${data.polymer_type || ""})`;
+  document.getElementById("rep-score-val").textContent = `${parseFloat(data.compatibility_score).toFixed(2)}%`;
+
+  document.getElementById("rep-otr").textContent = `${data.otr || "-"} cc/(m²·d·atm)`;
+  document.getElementById("rep-wvtr").textContent = `${data.wvtr || "-"} g/(m²·d)`;
+  document.getElementById("rep-thickness").textContent = `${data.thickness || "-"} μm`;
+  document.getElementById("rep-cost").textContent = `$${data.estimated_cost || "-"}/m²`;
+  document.getElementById("rep-recyc").textContent = `${data.recyclability || "-"}%`;
+  document.getElementById("rep-renew").textContent = `${data.renewable_content || "-"}%`;
+  document.getElementById("rep-mech").textContent = data.mechanical_strength || "High";
+  document.getElementById("rep-seal").textContent = data.sealability || "Good";
+
+  document.getElementById("rep-sub-o2").textContent = `${Math.round(data.oxygen_score || 0)}%`;
+  document.getElementById("rep-sub-wv").textContent = `${Math.round(data.moisture_score || 0)}%`;
+  document.getElementById("rep-sub-shelf").textContent = `${Math.round(data.shelf_life_score || 0)}%`;
+  document.getElementById("rep-sub-cost").textContent = `${Math.round(data.cost_score || 0)}%`;
+
+  const reasonsEl = document.getElementById("rep-reasons");
+  reasonsEl.innerHTML = "";
+  (data.reason || "").split("; ").filter(Boolean).forEach(r => {
+    const li = document.createElement("li");
+    li.textContent = r;
+    reasonsEl.appendChild(li);
+  });
+
+  let rules = [];
+  try { rules = typeof data.triggered_rules === "string" ? JSON.parse(data.triggered_rules) : data.triggered_rules; } catch(e){}
+  const rulesEl = document.getElementById("rep-rules");
+  rulesEl.innerHTML = rules.length ? `<strong>Active Rules Triggered:</strong> ${rules.map(r => r.name || r.id).join(", ")}` : "No restrictive barrier rules triggered.";
+
+  document.getElementById("rep-source").textContent = data.material_source || "Peer-reviewed literature (Massey / Robertson / USDA).";
+});
+</script>
+{% endblock %}

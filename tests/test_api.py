@@ -245,3 +245,57 @@ class TestHistoryEndpoints:
         data = resp.get_json()
         assert data["success"] is False
         assert "not found" in data["error"].lower()
+
+
+class TestFrontendPages:
+    """Test frontend template page rendering."""
+
+    def test_home_page(self, app_client):
+        resp = app_client.get("/home")
+        assert resp.status_code == 200
+        html = resp.get_data(as_text=True)
+        assert "SMART FOOD PACKAGING" in html
+        assert "Start Analysis" in html
+
+    def test_root_browser_accept(self, app_client):
+        resp = app_client.get("/", headers={"Accept": "text/html,application/xhtml+xml"})
+        assert resp.status_code == 200
+        html = resp.get_data(as_text=True)
+        assert "SMART FOOD PACKAGING" in html
+
+    def test_analyze_page(self, app_client):
+        resp = app_client.get("/analyze")
+        assert resp.status_code == 200
+        html = resp.get_data(as_text=True)
+        assert "Food Packaging Analysis" in html
+        assert "preset-select" in html
+
+    def test_results_page(self, app_client):
+        resp = app_client.get("/results")
+        assert resp.status_code == 200
+        html = resp.get_data(as_text=True)
+        assert "Recommendation Results" in html
+
+    def test_compare_page(self, app_client):
+        resp = app_client.get("/compare")
+        assert resp.status_code == 200
+        html = resp.get_data(as_text=True)
+        assert "Materials Catalog Matrix" in html
+
+    def test_history_page(self, app_client):
+        resp = app_client.get("/history")
+        assert resp.status_code == 200
+        html = resp.get_data(as_text=True)
+        assert "Recommendation History" in html
+
+    def test_report_page(self, app_client):
+        resp = app_client.get("/report")
+        assert resp.status_code == 200
+        html = resp.get_data(as_text=True)
+        assert "SMART FOOD PACKAGING REPORT" in html
+
+    def test_report_page_with_id(self, app_client):
+        resp = app_client.get("/report/1")
+        assert resp.status_code == 200
+        html = resp.get_data(as_text=True)
+        assert "SMART FOOD PACKAGING REPORT" in html

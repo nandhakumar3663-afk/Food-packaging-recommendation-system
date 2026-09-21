@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Food Packaging Analysis - Smart Food Packaging AI{% endblock %}
+
+{% block content %}
+<div style="max-width:960px; margin:0 auto;">
+
+  <!-- Page Header -->
+  <div style="margin-bottom:2rem; text-align:center;">
+    <h1 style="font-size:2.25rem; font-weight:800; color:#fff; margin-bottom:0.5rem; letter-spacing:-0.02em;">
+      Food Packaging Analysis
+    </h1>
+    <p style="color:var(--text-secondary); font-size:1rem;">
+      Enter the chemical properties, storage logistics, and shelf-life requirements to generate packaging recommendations.
+    </p>
+  </div>
+
+  <!-- Preset Loader Card -->
+  <div class="card" style="margin-bottom:2rem; background:linear-gradient(145deg, rgba(28, 39, 76, 0.9), rgba(16, 26, 54, 0.9)); border-color:rgba(6, 182, 212, 0.35);">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+      <div>
+        <h3 style="font-size:1.05rem; color:#fff; margin-bottom:0.25rem;">⚡ Quick Preset Loader</h3>
+        <p style="font-size:0.85rem; color:var(--text-secondary); margin:0;">
+          Select a verified reference commodity to autofill baseline values instantly.
+        </p>
+      </div>
+      <div style="min-width:280px;">
+        <select id="preset-select" class="form-control" style="background-color:var(--bg-primary);">
+          <option value="">-- Choose a Food Preset --</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Active Preset Alert Banner -->
+    <div id="preset-loaded-banner" class="disclaimer-badge" style="display:none; margin-top:1rem; width:100%; text-align:left; background:rgba(6, 182, 212, 0.1); color:var(--accent-cyan); border-color:rgba(6, 182, 212, 0.3);">
+      Preset loaded. You may adjust any parameter below.
+    </div>
+  </div>
+
+  <!-- Main Analysis Form -->
+  <form id="packaging-analysis-form" novalidate>
+    <input type="hidden" id="food_id" name="food_id" value="">
+
+    <!-- Section 1: Commodity & Composition -->
+    <div class="card" style="margin-bottom:1.5rem;">
+      <h3 style="font-size:1.15rem; color:#fff; margin-bottom:1.25rem; padding-bottom:0.5rem; border-bottom:1px solid rgba(46, 62, 111, 0.5); display:flex; align-items:center; gap:0.5rem;">
+        <span>🍎</span> 1. Food Commodity & Chemical Composition
+      </h3>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label" for="food_name">Food Commodity Name *</label>
+          <input type="text" id="food_name" class="form-control" placeholder="e.g. Roasted Whole Coffee Beans" required>
+          <div class="field-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="category">Category *</label>
+          <select id="category" class="form-control" required>
+            <option value="">-- Select Category --</option>
+            <option value="Dairy">Dairy</option>
+            <option value="Produce">Produce</option>
+            <option value="Meat & Poultry">Meat & Poultry</option>
+            <option value="Seafood">Seafood</option>
+            <option value="Bakery">Bakery</option>
+            <option value="Snack Foods">Snack Foods</option>
+            <option value="Dry Goods & Cereals">Dry Goods & Cereals</option>
+            <option value="Beverage">Beverage</option>
+            <option value="Confectionery">Confectionery</option>
+          </select>
+          <div class="field-error"></div>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="form-group">
+          <label class="form-label" for="moisture">Moisture Content *</label>
+          <div class="input-wrapper input-has-unit">
+            <input type="number" id="moisture" class="form-control" placeholder="0.0" step="0.1" min="0" max="100" required>
+            <span class="input-unit">%</span>
+          </div>
+          <div class="form-hint">Water percentage by weight (0 - 100)</div>
+          <div class="field-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="fat">Fat / Lipid Content *</label>
+          <div class="input-wrapper input-has-unit">
+            <input type="number" id="fat" class="form-control" placeholder="0.0" step="0.1" min="0" max="100" required>
+            <span class="input-unit">%</span>
+          </div>
+          <div class="form-hint">Total lipid content (0 - 100)</div>
+          <div class="field-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="ph">pH Level *</label>
+          <div class="input-wrapper input-has-unit">
+            <input type="number" id="ph" class="form-control" placeholder="7.0" step="0.1" min="1.0" max="14.0" required>
+            <span class="input-unit">pH</span>
+          </div>
+          <div class="form-hint">Acidity / alkalinity (1.0 - 14.0)</div>
+          <div class="field-error"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Storage & Environmental Conditions -->
+    <div class="card" style="margin-bottom:1.5rem;">
+      <h3 style="font-size:1.15rem; color:#fff; margin-bottom:1.25rem; padding-bottom:0.5rem; border-bottom:1px solid rgba(46, 62, 111, 0.5); display:flex; align-items:center; gap:0.5rem;">
+        <span>🌡️</span> 2. Respiration & Environmental Conditions
+      </h3>
+
+      <div class="grid-3">
+        <div class="form-group">
+          <label class="form-label" for="respiration_rate">Respiration Rate *</label>
+          <select id="respiration_rate" class="form-control" required>
+            <option value="None">None (Inert / Dry / Processed)</option>
+            <option value="Low">Low</option>
+            <option value="Moderate">Moderate</option>
+            <option value="High">High</option>
+            <option value="Very High">Very High (e.g. Berries, Spinach)</option>
+          </select>
+          <div class="form-hint">Crucial for gas transmission in fresh produce</div>
+          <div class="field-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="storage_temperature">Storage Temperature *</label>
+          <div class="input-wrapper input-has-unit">
+            <input type="number" id="storage_temperature" class="form-control" placeholder="20.0" step="0.5" min="-40" max="60" required>
+            <span class="input-unit">°C</span>
+          </div>
+          <div class="form-hint">-40°C to 60°C target temperature</div>
+          <div class="field-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="storage_rh">Relative Humidity *</label>
+          <div class="input-wrapper input-has-unit">
+            <input type="number" id="storage_rh" class="form-control" placeholder="65.0" step="1" min="0" max="100" required>
+            <span class="input-unit">% RH</span>
+          </div>
+          <div class="form-hint">Storage ambient humidity (0 - 100%)</div>
+          <div class="field-error"></div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label" for="storage_type">Storage Protocol</label>
+          <select id="storage_type" class="form-control">
+            <option value="Ambient">Ambient</option>
+            <option value="Refrigerated">Refrigerated (Chilled)</option>
+            <option value="Frozen">Frozen</option>
+            <option value="Controlled Atmosphere">Controlled Atmosphere (CA)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="transport_condition">Logistics Condition</label>
+          <select id="transport_condition" class="form-control">
+            <option value="Standard Ambient">Standard Ambient Logistics</option>
+            <option value="Cold Chain">Refrigerated Cold Chain</option>
+            <option value="Ventilated">Ventilated Transport</option>
+            <option value="Frozen Logistics">Frozen Logistics</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Target Shelf Life & Sensitivities -->
+    <div class="card" style="margin-bottom:2rem;">
+      <h3 style="font-size:1.15rem; color:#fff; margin-bottom:1.25rem; padding-bottom:0.5rem; border-bottom:1px solid rgba(46, 62, 111, 0.5); display:flex; align-items:center; gap:0.5rem;">
+        <span>⏳</span> 3. Shelf-Life Target & Degradation Sensitivities
+      </h3>
+
+      <div class="grid-4">
+        <div class="form-group">
+          <label class="form-label" for="target_shelf_life">Target Shelf Life *</label>
+          <div class="input-wrapper input-has-unit">
+            <input type="number" id="target_shelf_life" class="form-control" placeholder="30" min="1" max="3650" required>
+            <span class="input-unit">days</span>
+          </div>
+          <div class="form-hint">1 to 3650 days</div>
+          <div class="field-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="oxygen_sensitivity">Oxygen Sensitivity *</label>
+          <select id="oxygen_sensitivity" class="form-control" required>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High (Lipid oxidation)</option>
+          </select>
+          <div class="form-hint">Governs OTR requirements</div>
+          <div class="field-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="moisture_sensitivity">Moisture Sensitivity *</label>
+          <select id="moisture_sensitivity" class="form-control" required>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High (Crispness loss)</option>
+          </select>
+          <div class="form-hint">Governs WVTR requirements</div>
+          <div class="field-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="light_sensitivity">Light Sensitivity *</label>
+          <select id="light_sensitivity" class="form-control" required>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High (Photo-oxidation)</option>
+          </select>
+          <div class="form-hint">Requires opacity / foil</div>
+          <div class="field-error"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div style="display:flex; justify-content:flex-end; gap:1rem;">
+      <button type="reset" class="btn btn-secondary">Reset Parameters</button>
+      <button type="submit" id="submit-analysis-btn" class="btn btn-primary" style="padding:0.75rem 2rem; font-size:1.05rem;">
+        <span>🔍</span> Analyze Packaging Requirements
+      </button>
+    </div>
+  </form>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/analyze.js') }}"></script>
+{% endblock %}

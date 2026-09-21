@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Evaluation History - Smart Food Packaging AI{% endblock %}
+
+{% block content %}
+<div>
+  <!-- Header -->
+  <div style="margin-bottom:2rem; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <h1 style="font-size:2.25rem; font-weight:800; color:#fff; margin-bottom:0.5rem; letter-spacing:-0.02em;">
+        Recommendation History
+      </h1>
+      <p style="color:var(--text-secondary); font-size:1rem; margin:0;">
+        Review previous packaging analyses stored in SQLite. Click "View" or "Report" to inspect full details.
+      </p>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:1rem;">
+      <span id="history-count" class="badge badge-cyan" style="font-size:0.85rem; padding:0.4rem 0.8rem;">
+        Loading history...
+      </span>
+
+      <div style="display:flex; align-items:center; gap:0.5rem;">
+        <label for="history-limit-select" style="font-size:0.825rem; color:var(--text-muted);">Limit:</label>
+        <select id="history-limit-select" class="form-control" style="width:auto; padding:0.35rem 0.75rem; font-size:0.85rem;">
+          <option value="10">10</option>
+          <option value="20" selected>20</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- History Data Table -->
+  <div class="table-responsive" style="margin-bottom:2rem;">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Food Commodity</th>
+          <th>Recommended Material</th>
+          <th>Score</th>
+          <th>Primary Justification</th>
+          <th>Date & Time</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="history-tbody">
+        <tr>
+          <td colspan="7" style="text-align:center; padding:2.5rem; color:var(--text-muted);">
+            Loading analysis history from SQLite database...
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="text-align:right;">
+    <a href="/analyze" class="btn btn-primary"><span>+</span> Run New Analysis</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/history.js') }}"></script>
+{% endblock %}

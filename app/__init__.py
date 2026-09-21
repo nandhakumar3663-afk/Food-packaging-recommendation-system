@@ -9,7 +9,11 @@ from app.config import Config
 
 def create_app(config_class=Config) -> Flask:
     """Flask application factory."""
-    app = Flask(__name__)
+    app = Flask(
+        __name__,
+        template_folder=str(Config.PROJECT_ROOT / "templates"),
+        static_folder=str(Config.PROJECT_ROOT / "static"),
+    )
     app.config.from_object(config_class)
 
     # Configure structured logging

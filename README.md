@@ -30,18 +30,21 @@ Developed and tested for local execution on:
 
 ### Phase 2: Flask Backend & Recommendation API Integration
 - Clean Flask application factory (`create_app`) with centralized JSON error handling (400, 404, 500).
-- Modular blueprint routing:
-  - `GET /api/foods`: Food commodity catalog
-  - `GET /api/foods/<food_id>`: Individual food details
-  - `GET /api/materials`: Packaging material specifications
-  - `GET /api/materials/<material_id>`: Individual material details
-  - `POST /api/analyze`: Main hybrid recommendation workflow
-  - `GET /api/presets`: Food presets for rapid evaluation
-  - `GET /api/history`: Past recommendation audit log with pagination
-  - `GET /api/health`: System health monitor
+- Modular blueprint routing (`/api/foods`, `/api/materials`, `/api/analyze`, `/api/history`, `/api/presets`, `/api/health`).
 - Neutral 4-category recommendation output: `Recommended Match`, `Alternative Match`, `Lower-cost Alternative`, and `Sustainability-oriented Alternative`.
 - Automatic recommendation persistence in SQLite history.
-- 42 automated tests (unit + API integration) passing in under 0.4 seconds.
+
+### Phase 3: Frontend Web Application & User Experience
+- Responsive, modern dashboard design system in Vanilla CSS (`static/css/style.css`).
+- Modular JavaScript architecture (`api.js`, `ui.js`, `analyze.js`, `results.js`, `compare.js`, `history.js`).
+- Complete user flow:
+  1. **Home (`/home`)**: Mission, 4-step workflow, feature cards, and technical architecture.
+  2. **Analyze (`/analyze`)**: Food property inputs, instant preset loader, live client-side validation, and simulated progressive loading modal.
+  3. **Results (`/results`)**: Recommended Match hero card, project-defined compatibility score (0 - 100%), 7 subscore progress bars, "Why this recommendation?" explanations, triggered rules breakdown, and 3 alternative matches.
+  4. **Compare (`/compare`)**: Live search and category-filtered packaging materials matrix with barrier specifications and provenance badges.
+  5. **History (`/history`)**: SQLite evaluation audit log with limit selector and detail navigation.
+  6. **Report (`/report/<rec_id>`)**: Clean, printer-friendly evaluation audit report with `@media print` styling.
+- 50 automated tests (unit + API integration + page templates) passing in under 0.4 seconds.
 
 ---
 
@@ -55,7 +58,7 @@ Food-packaging-recommendation-system/
 │   ├── config.py                 # Configuration & scoring weights
 │   ├── routes/
 │   │   ├── __init__.py
-│   │   ├── main.py               # Landing and health check routes
+│   │   ├── main.py               # Template pages and health check routes
 │   │   ├── analysis.py           # POST /api/analyze and GET /api/presets
 │   │   └── recommendation.py     # Foods, materials, and history routes
 │   ├── services/
@@ -81,13 +84,33 @@ Food-packaging-recommendation-system/
 │   │   └── sample_materials.json # Curated packaging materials with citations
 │   └── packaging_system.db       # Local SQLite database (auto-generated)
 │
+├── templates/
+│   ├── base.html                 # Base layout, navbar, loading overlay, footer
+│   ├── index.html                # Home overview & feature pillars
+│   ├── analyze.html              # Input form with preset loader & validation
+│   ├── results.html              # Results dashboard with score bars & alternatives
+│   ├── compare.html              # Materials comparison matrix with live search
+│   ├── history.html              # Recommendation audit history log
+│   └── report.html               # Printable summary report
+│
+├── static/
+│   ├── css/
+│   │   └── style.css             # Vanilla CSS design system & print styles
+│   └── js/
+│       ├── api.js                # Centralized REST API client
+│       ├── ui.js                 # Toasts, progress modal, formatting helpers
+│       ├── analyze.js            # Form controller & client validation
+│       ├── results.js            # Results renderer & score visualizer
+│       ├── compare.js            # Catalog matrix filter & search
+│       └── history.js            # Historical log controller
+│
 ├── scripts/
 │   ├── init_db.py                # Initializes SQLite database schema & indices
 │   ├── seed_data.py              # Validates and seeds sample records
 │   └── verify_db.py              # Queries and audits database contents
 │
 ├── tests/
-│   ├── test_api.py               # Integration tests for REST API endpoints
+│   ├── test_api.py               # Integration tests for REST API endpoints & templates
 │   ├── test_validation.py        # Boundary and domain validation tests
 │   ├── test_database.py          # Database schema and CRUD tests
 │   ├── test_rule_engine.py       # YAML rule triggering & filtering tests
@@ -95,6 +118,7 @@ Food-packaging-recommendation-system/
 │
 ├── docs/
 │   ├── api.md                    # REST API documentation & schemas
+│   ├── frontend.md               # Frontend architecture & user flow documentation
 │   ├── data_dictionary.md        # Detailed schema specifications
 │   └── data_sources.md           # Provenance, citations, and test conditions
 │
@@ -139,11 +163,17 @@ python run.py
 ```
 *Server starts on `http://127.0.0.1:5000`.*
 
+Open your web browser and navigate to:
+- `http://127.0.0.1:5000/` or `http://127.0.0.1:5000/home` (Home Overview)
+- `http://127.0.0.1:5000/analyze` (Run Packaging Analysis)
+- `http://127.0.0.1:5000/compare` (Materials Catalog Matrix)
+- `http://127.0.0.1:5000/history` (Recommendation Audit History)
+
 ### 6. Run Test Suite
 ```bash
 python -m pytest tests/ -v
 ```
-*Runs all 42 unit and integration tests.*
+*Runs all 50 unit, integration, and template tests.*
 
 ---
 
