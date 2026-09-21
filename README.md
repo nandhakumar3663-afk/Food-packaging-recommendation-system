@@ -91,7 +91,21 @@ Developed and tested for local execution on:
 - **ESP32 Firmware & Local Telemetry Simulator**:
   - Non-blocking C++ ESP32 firmware (`iot/esp32/smart_packaging_esp32.ino`) with ring-buffer caching for offline recovery.
   - Standalone Python CLI simulator (`scripts/simulate_iot.py`) supporting normal, watch, and warning modes.
-- **82 Automated Tests Passing**: 100% test pass rate covering validation, SQLite CRUD, retention pruning, monitor states, and API routes.
+
+### Phase 7: Real-World Validation, System Hardening & Final Demonstration ✅
+- **Exhaustive System Audit & Hardening**:
+  - Complete architecture, limitations, risks, and validation audit documented in `docs/final_system_audit.md`.
+  - API defense-in-depth: query parameter bounds checking (limit bounded 1–100, invalid inputs rejected), defensive JSON parsing, and zero traceback leakage.
+  - Security and secret hygiene: gitignore exclusions for `config.h`, `.env`, and credential patterns.
+- **Automated Demonstration Runner & Walkthrough**:
+  - Standalone, zero-dependency CLI demonstration script (`scripts/demo.py`) executing all 8 pipeline stages from analysis to excursion and reassessment.
+  - Verified regulatory immutability: Reassessment writes a separate auditable record while leaving the original analysis untouched.
+  - 15-step interactive manual documented in `docs/final_demo.md`.
+- **Comprehensive Capstone Documentation**:
+  - Objective 15-subsystem project scorecard in `docs/project_status.md` (14 Complete, 1 Hardware Validation Pending).
+  - 18-section capstone architecture and engineering report in `docs/final_project_report.md`.
+- **98 Automated Tests Passing**:
+  - Expanded test suite covering boundary fuzzing, offline transitions, security controls, immutability, and CPU performance benchmarks on AMD Ryzen 5 5500U.
 
 ---
 
@@ -186,7 +200,8 @@ Food-packaging-recommendation-system/
 │   ├── seed_data.py              # Validates and seeds sample records
 │   ├── verify_db.py              # Queries and audits database contents
 │   ├── audit_data.py             # Data quality, boundary, and provenance audit script
-│   └── simulate_iot.py           # Standalone CLI telemetry simulator (normal/watch/warning)
+│   ├── simulate_iot.py           # Standalone CLI telemetry simulator (normal/watch/warning)
+│   └── demo.py                   # Automated 8-stage end-to-end demonstration runner
 │
 ├── tests/
 │   ├── test_api.py               # Integration tests for REST API endpoints & templates
@@ -196,7 +211,8 @@ Food-packaging-recommendation-system/
 │   ├── test_scoring_engine.py    # Scoring normalization & weight tests
 │   ├── test_ml.py                # ML inference & hybrid veto tests
 │   ├── test_e2e_phase5.py        # Phase 5 E2E, profiles, cost, sustainability, audit tests
-│   └── test_iot.py               # IoT payload validation, CRUD, pruning, monitor states, API tests
+│   ├── test_iot.py               # IoT payload validation, CRUD, pruning, monitor states, API tests
+│   └── test_phase7_hardening.py  # Boundary fuzzing, security, offline, immutability, benchmark tests
 │
 ├── docs/
 │   ├── api.md                    # REST API documentation & schemas
@@ -210,7 +226,11 @@ Food-packaging-recommendation-system/
 │   ├── model_limitations.md      # Disclosures, assumptions, and hardware constraints
 │   ├── iot_setup.md              # Hardware wiring, ESP32 pinout, flashing guide, and simulator
 │   ├── iot_architecture.md       # Ingestion schema, data pipeline, SQLite schema, retention
-│   └── storage_monitoring.md     # Evaluation matrix, tolerance thresholds, reassessment workflow
+│   ├── storage_monitoring.md     # Evaluation matrix, tolerance thresholds, reassessment workflow
+│   ├── final_system_audit.md     # Phase 7 full system audit and edge-case review
+│   ├── final_demo.md             # 15-step end-to-end demonstration guide
+│   ├── project_status.md         # Objective 15-subsystem scorecard
+│   └── final_project_report.md   # Comprehensive 18-section capstone architecture report
 │
 ├── requirements.txt              # CPU-only pinned dependencies
 ├── run.py                        # Local Flask server entry point
@@ -270,11 +290,17 @@ python scripts/simulate_iot.py --mode warning --interval 2 --count 15
 ```
 Telemetry packets are tagged with provenance `"SIMULATED SENSOR DATA"` and can be monitored live on `/monitor`.
 
-### 7. Run Automated Test Suite
+### 7. Run End-to-End Automated Demonstration
+Execute the automated 8-stage demonstration script verifying the full analysis, recommendation, IoT telemetry, excursion, and reassessment workflow:
+```bash
+python scripts/demo.py
+```
+
+### 8. Run Automated Test Suite
 ```bash
 python -m pytest tests/ -v
 ```
-*Executes all 82 unit and integration tests across API, database, rules, scoring, ML, and IoT.*
+*Executes all 98 unit, integration, edge-case, and security tests across API, database, rules, scoring, ML, IoT, and system hardening.*
 
 ---
 

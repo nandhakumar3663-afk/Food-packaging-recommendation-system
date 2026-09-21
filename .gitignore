@@ -50,3 +50,11 @@ htmlcov/
 
 # Logs
 *.log
+
+# Hardware & Local Credentials
+iot/esp32/config.h
+.env
+*.env
+*.pem
+*.key
+scratch/

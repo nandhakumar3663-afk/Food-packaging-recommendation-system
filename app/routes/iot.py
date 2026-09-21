@@ -33,7 +33,20 @@ def post_reading():
             "error": "Request body must be valid application/json."
         }), 400
 
-    payload = request.get_json()
+    try:
+        payload = request.get_json()
+    except Exception:
+        return jsonify({
+            "success": False,
+            "error": "Malformed JSON in request body."
+        }), 400
+
+    if not isinstance(payload, dict):
+        return jsonify({
+            "success": False,
+            "error": "JSON payload must be an object."
+        }), 400
+
     is_valid, cleaned, errors = validate_iot_payload(payload)
     if not is_valid or not cleaned:
         return jsonify({
@@ -73,8 +86,37 @@ def get_readings_list():
     """
     db_path = current_app.config.get("DATABASE_PATH")
     device_id = request.args.get("device_id")
-    analysis_id = request.args.get("analysis_id", type=int)
-    limit = request.args.get("limit", default=50, type=int)
+    
+    # Safely validate analysis_id
+    analysis_id_raw = request.args.get("analysis_id")
+    analysis_id = None
+    if analysis_id_raw is not None:
+        try:
+            analysis_id = int(analysis_id_raw)
+        except (ValueError, TypeError):
+            return jsonify({
+                "success": False,
+                "error": "Query parameter 'analysis_id' must be an integer."
+            }), 400
+
+    # Safely validate limit
+    limit_raw = request.args.get("limit")
+    if limit_raw is not None:
+        try:
+            limit = int(limit_raw)
+            if limit < 1 or limit > 100:
+                return jsonify({
+                    "success": False,
+                    "error": "Query parameter 'limit' must be an integer between 1 and 100."
+                }), 400
+        except (ValueError, TypeError):
+            return jsonify({
+                "success": False,
+                "error": "Query parameter 'limit' must be an integer between 1 and 100."
+            }), 400
+    else:
+        limit = 50
+
     start_time = request.args.get("start_time")
     end_time = request.args.get("end_time")
 
