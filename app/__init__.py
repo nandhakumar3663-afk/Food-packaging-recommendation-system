@@ -5,7 +5,7 @@ Phase 8 — Final Release.
 
 import logging
 import os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from app.config import Config
 
 
@@ -49,14 +49,13 @@ def create_app(config_class=Config) -> Flask:
     )
     app.config.from_object(config_class)
 
-    # CORS support for React dev server (localhost:5173)
+    # CORS support for React dev server and production
     @app.after_request
     def add_cors_headers(response):
-        origin = response.headers.get('Access-Control-Allow-Origin')
-        if not origin:
-            response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
-            response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Accept'
-            response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+        origin = request.headers.get("Origin") or "*"
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Accept, Authorization"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
         return response
 
     # Configure structured logging
