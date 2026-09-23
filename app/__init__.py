@@ -49,6 +49,16 @@ def create_app(config_class=Config) -> Flask:
     )
     app.config.from_object(config_class)
 
+    # CORS support for React dev server (localhost:5173)
+    @app.after_request
+    def add_cors_headers(response):
+        origin = response.headers.get('Access-Control-Allow-Origin')
+        if not origin:
+            response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
+            response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Accept'
+            response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+        return response
+
     # Configure structured logging
     _configure_logging(app)
     app.logger.info("Smart Food Packaging Recommendation System starting...")

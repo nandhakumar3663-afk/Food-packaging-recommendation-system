@@ -35,8 +35,8 @@ if __name__ == "__main__":
     print(f"║  Smart Food Packaging Recommendation System                 ║")
     print(f"║  Phase 8 — Final Release                                    ║")
     print(f"║  Hardware: CPU Only (AMD Ryzen 5 5500U, No CUDA)            ║")
-    print(f"║  Environment: {env:<46s} ║")
-    print(f"║  Listening: http://{host}:{port:<40s}║")
+    url_str = f"http://{host}:{port}"
+    print(f"║  Listening: {url_str:<46s}║")
     print(f"╚══════════════════════════════════════════════════════════════╝")
 
     app.run(host=host, port=port, debug=debug)
