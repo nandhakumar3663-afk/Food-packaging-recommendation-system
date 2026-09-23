@@ -2,24 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import { useToast } from '../components/Layout';
+import { useLanguage } from '../context/LanguageContext';
 import LoadingModal from '../components/LoadingModal';
-
-const CATEGORIES = [
-  { value: '', label: '-- Select Category --' },
-  { value: 'Produce', label: 'Fresh Produce (Fruits & Vegetables)' },
-  { value: 'Snack Foods', label: 'Snack Foods & Crisps' },
-  { value: 'Meat & Poultry', label: 'Meat & Poultry' },
-  { value: 'Dairy', label: 'Dairy & Cheese' },
-  { value: 'Bakery', label: 'Bakery & Bread' },
-  { value: 'Dry Goods & Cereals', label: 'Dry Goods & Cereals' },
-  { value: 'Beverages', label: 'Beverages & Juices' },
-  { value: 'Confectionery', label: 'Confectionery & Sweets' },
-  { value: 'Condiments & Sauces', label: 'Condiments & Sauces' },
-];
 
 export default function AnalyzePage() {
   const navigate = useNavigate();
   const showToast = useToast();
+  const { t } = useLanguage();
   const [step, setStep] = useState(1);
   const [presets, setPresets] = useState([]);
   const [presetId, setPresetId] = useState('');
@@ -33,6 +22,19 @@ export default function AnalyzePage() {
     oxygen_sensitivity: 'Medium', moisture_sensitivity: 'Medium', light_sensitivity: 'Low',
     preference_profile: 'balanced',
   });
+
+  const categories = [
+    { value: '', label: t('analyze.selectCategory', '-- Select Category --') },
+    { value: 'Produce', label: t('analyze.categories.produce', 'Fresh Produce (Fruits & Vegetables)') },
+    { value: 'Snack Foods', label: t('analyze.categories.snack', 'Snack Foods & Crisps') },
+    { value: 'Meat & Poultry', label: t('analyze.categories.meat', 'Meat & Poultry') },
+    { value: 'Dairy', label: t('analyze.categories.dairy', 'Dairy & Cheese') },
+    { value: 'Bakery', label: t('analyze.categories.bakery', 'Bakery & Bread') },
+    { value: 'Dry Goods & Cereals', label: t('analyze.categories.dryGoods', 'Dry Goods & Cereals') },
+    { value: 'Beverages', label: t('analyze.categories.beverages', 'Beverages & Juices') },
+    { value: 'Confectionery', label: t('analyze.categories.confectionery', 'Confectionery & Sweets') },
+    { value: 'Condiments & Sauces', label: t('analyze.categories.condiments', 'Condiments & Sauces') },
+  ];
 
   useEffect(() => {
     api.getPresets().then(r => { if (r?.success) setPresets(r.presets); }).catch(() => {});
@@ -62,30 +64,34 @@ export default function AnalyzePage() {
       light_sensitivity: preset.light_sensitivity || 'Low',
     }));
     setPresetLoaded(true);
-    showToast(`Loaded preset for ${preset.food_name}`, 'info');
+    showToast(`${preset.food_name}`, 'info');
   };
 
   const validate = (s) => {
     const e = {};
     if (s === 1) {
-      if (!form.food_name.trim()) e.food_name = 'Please enter a food name.';
-      if (!form.category) e.category = 'Please select a food category.';
+      if (!form.food_name.trim()) e.food_name = t('analyze.validation.foodNameReq', 'Please enter a food name.');
+      if (!form.category) e.category = t('analyze.validation.categoryReq', 'Please select a food category.');
     } else if (s === 2) {
       const m = parseFloat(form.moisture), f = parseFloat(form.fat), p = parseFloat(form.ph);
-      if (isNaN(m) || m < 0 || m > 100) e.moisture = 'Moisture must be between 0 and 100%.';
-      if (isNaN(f) || f < 0 || f > 100) e.fat = 'Fat must be between 0 and 100%.';
-      if (!isNaN(m) && !isNaN(f) && m + f > 100) { e.moisture = 'Sum cannot exceed 100%.'; e.fat = 'Sum cannot exceed 100%.'; }
-      if (isNaN(p) || p < 1 || p > 14) e.ph = 'pH must be between 1.0 and 14.0.';
+      if (isNaN(m) || m < 0 || m > 100) e.moisture = t('analyze.validation.moistureRange', 'Moisture must be between 0 and 100%.');
+      if (isNaN(f) || f < 0 || f > 100) e.fat = t('analyze.validation.fatRange', 'Fat must be between 0 and 100%.');
+      if (!isNaN(m) && !isNaN(f) && m + f > 100) { 
+        e.moisture = t('analyze.validation.sumLimit', 'Sum of moisture and fat cannot exceed 100%.'); 
+        e.fat = t('analyze.validation.sumLimit', 'Sum of moisture and fat cannot exceed 100%.'); 
+      }
+      if (isNaN(p) || p < 1 || p > 14) e.ph = t('analyze.validation.phRange', 'pH must be between 1.0 and 14.0.');
     } else if (s === 3) {
-      const sl = parseInt(form.target_shelf_life, 10), t = parseFloat(form.storage_temperature), rh = parseFloat(form.storage_rh);
-      if (isNaN(sl) || sl <= 0) e.target_shelf_life = 'Must be at least 1 day.';
-      if (isNaN(t) || t < -30 || t > 60) e.storage_temperature = 'Must be -30°C to 60°C.';
-      if (isNaN(rh) || rh < 10 || rh > 100) e.storage_rh = 'Must be 10% to 100%.';
+      const sl = parseInt(form.target_shelf_life, 10), temp = parseFloat(form.storage_temperature), rh = parseFloat(form.storage_rh);
+      if (isNaN(sl) || sl <= 0) e.target_shelf_life = t('analyze.validation.shelfLifeMin', 'Target shelf life must be at least 1 day.');
+      if (isNaN(temp) || temp < -30 || temp > 60) e.storage_temperature = t('analyze.validation.tempRange', 'Temperature must be between -30°C and 60°C.');
+      if (isNaN(rh) || rh < 10 || rh > 100) e.storage_rh = t('analyze.validation.rhRange', 'Relative humidity must be between 10% and 100%.');
     }
     setErrors(e);
-    if (Object.keys(e).length > 0) showToast('Some fields need correction.', 'warning');
+    if (Object.keys(e).length > 0) showToast(t('analyze.validation.fixErrors', 'Some fields need correction.'), 'warning');
     return Object.keys(e).length === 0;
   };
+
 
   const goNext = (next) => { if (validate(step)) { setStep(next); window.scrollTo({ top: 120, behavior: 'smooth' }); } };
   const goBack = (prev) => { setStep(prev); window.scrollTo({ top: 120, behavior: 'smooth' }); };
@@ -143,8 +149,10 @@ export default function AnalyzePage() {
   );
 
   const stepIndicators = [
-    { n: 1, label: 'Food Item' }, { n: 2, label: 'Properties' },
-    { n: 3, label: 'Storage' }, { n: 4, label: 'Sensitivities' },
+    { n: 1, label: t('analyze.step1', '1. Food Details') }, 
+    { n: 2, label: t('analyze.step2', '2. Properties & Respiration') },
+    { n: 3, label: t('analyze.step3', '3. Storage & Logistics') }, 
+    { n: 4, label: t('analyze.step4', '4. Goals & Sensitivities') },
   ];
 
   return (
@@ -153,16 +161,16 @@ export default function AnalyzePage() {
 
       {/* Header */}
       <div className="section-header" style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-        <span className="badge badge-green" style={{ marginBottom: '0.5rem' }}>Step-by-Step Assistant</span>
-        <h1 className="page-title">Food Packaging Analysis</h1>
+        <span className="badge badge-green" style={{ marginBottom: '0.5rem' }}>{t('analyze.badge', 'Decision Intelligence Pipeline')}</span>
+        <h1 className="page-title">{t('analyze.pageTitle', 'Food Packaging Analysis')}</h1>
         <p className="page-subtitle" style={{ margin: '0 auto' }}>
-          Answer a few questions about your food product to receive an optimal, explainable packaging recommendation.
+          {t('analyze.pageSubtitle', 'Enter food properties, storage conditions, and optimization goals to evaluate optimal packaging materials.')}
         </p>
       </div>
 
       {/* Step Wizard */}
       <div className="step-wizard" aria-label="Analysis Steps">
-        {stepIndicators.map((s, i) => (
+        {stepIndicators.map((s) => (
           <div key={s.n} className={`step-item${step === s.n ? ' active' : step > s.n ? ' completed' : ''}`}>
             <div className="step-circle">{step > s.n ? '✓' : s.n}</div>
             <span className="step-title">{s.label}</span>
@@ -178,43 +186,47 @@ export default function AnalyzePage() {
           <div className={`form-step${step === 1 ? ' active' : ''}`}>
             <div className="card-header" style={{ marginBottom: '1.25rem' }}>
               <div>
-                <h2 className="card-title">Step 1: What are you packaging?</h2>
-                <p className="form-hint">Choose a standard food commodity or enter your own custom food.</p>
+                <h2 className="card-title">{t('analyze.step1Title', 'Food Identification & Presets')}</h2>
+                <p className="form-hint">{t('analyze.step1Desc', 'Choose a standard food commodity or enter your own custom food.')}</p>
               </div>
-              <span className="badge badge-neutral">1 of 4</span>
+              <span className="badge badge-neutral">1 / 4</span>
             </div>
 
             {/* Preset */}
             <div style={{ background: 'var(--primary-surface)', border: '1px dashed var(--primary)', borderRadius: 'var(--radius-md)', padding: '1rem', marginBottom: '1.5rem' }}>
               <label htmlFor="preset-select" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                ⚡ Quick-Start: Load a Known Food Preset
+                ⚡ {t('analyze.presetLabel', 'Quick-load a Preset Food')}
               </label>
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
                 <select id="preset-select" className="form-control" style={{ flex: 1, minWidth: 240 }}
                   value={presetId} onChange={e => { setPresetId(e.target.value); }}>
-                  <option value="">-- Choose a standard food commodity --</option>
+                  <option value="">{t('analyze.selectPreset', '-- Select a pre-configured food item --')}</option>
                   {presets.map(p => <option key={p.food_id} value={p.food_id}>{p.food_name} ({p.category})</option>)}
                 </select>
-                <button type="button" className="btn btn-secondary btn-sm" onClick={applyPreset}>Load Preset</button>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={applyPreset}>
+                  {t('analyze.loadPresetBtn', 'Apply Preset')}
+                </button>
               </div>
-              {presetLoaded && <div className="badge badge-green" style={{ marginTop: '0.65rem' }}>✓ Preset loaded — edit values below</div>}
+              {presetLoaded && <div className="badge badge-green" style={{ marginTop: '0.65rem' }}>✓ Preset loaded</div>}
             </div>
 
             <div className="form-grid">
-              <Field id="food_name" label="Food Name *" hint="Common or commercial food item name">
+              <Field id="food_name" label={`${t('analyze.foodNameLabel', 'Food Name')} *`} hint={t('analyze.foodNamePlaceholder', 'e.g. Crisp Potato Chips')}>
                 <input type="text" id="food_name" className={`form-control${errors.food_name ? ' input-error' : ''}`}
-                  placeholder="e.g. Crisp Potato Chips" value={form.food_name} onChange={e => set('food_name', e.target.value)} />
+                  placeholder={t('analyze.foodNamePlaceholder', 'e.g. Crisp Potato Chips')} value={form.food_name} onChange={e => set('food_name', e.target.value)} />
               </Field>
-              <Field id="category" label="Food Category *" hint="Used for default risk evaluation">
+              <Field id="category" label={`${t('analyze.categoryLabel', 'Food Category')} *`}>
                 <select id="category" className={`form-control${errors.category ? ' input-error' : ''}`}
                   value={form.category} onChange={e => set('category', e.target.value)}>
-                  {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                  {categories.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                 </select>
               </Field>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2rem' }}>
-              <button type="button" className="btn btn-primary" onClick={() => goNext(2)}>Next: Food Properties →</button>
+              <button type="button" className="btn btn-primary" onClick={() => goNext(2)}>
+                {t('analyze.nextBtn', 'Next Step →')}
+              </button>
             </div>
           </div>
 
@@ -222,38 +234,38 @@ export default function AnalyzePage() {
           <div className={`form-step${step === 2 ? ' active' : ''}`}>
             <div className="card-header" style={{ marginBottom: '1.25rem' }}>
               <div>
-                <h2 className="card-title">Step 2: Food Characteristics</h2>
-                <p className="form-hint">Physical composition determines moisture barriers, fat oxidation risks, and acidity constraints.</p>
+                <h2 className="card-title">{t('analyze.step2Title', 'Physicochemical Properties')}</h2>
+                <p className="form-hint">{t('analyze.step2Desc', 'Physical composition determines moisture barriers, fat oxidation risks, and acidity constraints.')}</p>
               </div>
-              <span className="badge badge-neutral">2 of 4</span>
+              <span className="badge badge-neutral">2 / 4</span>
             </div>
             <div className="form-grid">
-              <Field id="moisture" label="Moisture Content" hint="Water percentage (0 to 100%)"
-                tooltip="How much water the food contains. High moisture foods need vapor retention, while dry snacks need strict moisture exclusion.">
+              <Field id="moisture" label={t('analyze.moistureLabel', 'Moisture Content (%)')}>
                 <NumericInput id="moisture" value={form.moisture} min={0} max={100} step={0.1} unit="%" />
               </Field>
-              <Field id="fat" label="Fat & Oil Content" hint="Lipid percentage (Moisture + Fat ≤ 100%)"
-                tooltip="Higher fat content increases susceptibility to rancidity from light and oxygen exposure.">
+              <Field id="fat" label={t('analyze.fatLabel', 'Fat Content (%)')}>
                 <NumericInput id="fat" value={form.fat} min={0} max={100} step={0.1} unit="%" />
               </Field>
-              <Field id="ph" label="Acidity Level (pH)" hint="1 (very acidic) to 14 (alkaline)"
-                tooltip="Acidic foods (pH < 4.5) restrict bare unlined metal packaging to prevent corrosion.">
+              <Field id="ph" label={t('analyze.phLabel', 'Acidity (pH Level)')}>
                 <NumericInput id="ph" value={form.ph} min={1} max={14} step={0.1} unit="pH" />
               </Field>
-              <Field id="respiration_rate" label="Respiration Activity" hint="How actively the fresh food breathes after harvest"
-                tooltip="Fresh produce continues to consume oxygen and release CO2. Higher respiration requires permeable packaging.">
+              <Field id="respiration_rate" label={t('analyze.respirationLabel', 'Respiration Rate')}>
                 <select id="respiration_rate" className="form-control" value={form.respiration_rate} onChange={e => set('respiration_rate', e.target.value)}>
-                  <option value="None">None (Processed, dry, cooked)</option>
-                  <option value="Low">Low (Apples, citrus, potatoes)</option>
-                  <option value="Moderate">Moderate (Tomatoes, carrots)</option>
-                  <option value="High">High (Strawberries, bananas)</option>
-                  <option value="Very High">Very High (Spinach, mushrooms)</option>
+                  <option value="None">{t('analyze.respirationRates.none', 'None / Inert (Non-respiring)')}</option>
+                  <option value="Low">{t('analyze.respirationRates.low', 'Low (e.g. Onions, Potatoes)')}</option>
+                  <option value="Moderate">{t('analyze.respirationRates.medium', 'Medium (e.g. Apples, Carrots)')}</option>
+                  <option value="High">{t('analyze.respirationRates.high', 'High (e.g. Strawberries, Bananas)')}</option>
+                  <option value="Very High">{t('analyze.respirationRates.veryHigh', 'Very High / Extreme (e.g. Mushrooms, Asparagus)')}</option>
                 </select>
               </Field>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem' }}>
-              <button type="button" className="btn btn-outline" onClick={() => goBack(1)}>← Back</button>
-              <button type="button" className="btn btn-primary" onClick={() => goNext(3)}>Next: Storage & Shelf Life →</button>
+              <button type="button" className="btn btn-outline" onClick={() => goBack(1)}>
+                {t('analyze.prevBtn', '← Previous Step')}
+              </button>
+              <button type="button" className="btn btn-primary" onClick={() => goNext(3)}>
+                {t('analyze.nextBtn', 'Next Step →')}
+              </button>
             </div>
           </div>
 
@@ -261,36 +273,37 @@ export default function AnalyzePage() {
           <div className={`form-step${step === 3 ? ' active' : ''}`}>
             <div className="card-header" style={{ marginBottom: '1.25rem' }}>
               <div>
-                <h2 className="card-title">Step 3: Storage & Shelf Life</h2>
-                <p className="form-hint">Define temperature, relative humidity, and how long the product must remain fresh.</p>
+                <h2 className="card-title">{t('analyze.step3Title', 'Storage Environment & Distribution')}</h2>
+                <p className="form-hint">{t('analyze.step3Desc', 'Define temperature, relative humidity, and how long the product must remain fresh.')}</p>
               </div>
-              <span className="badge badge-neutral">3 of 4</span>
+              <span className="badge badge-neutral">3 / 4</span>
             </div>
             <div className="form-grid">
-              <Field id="target_shelf_life" label="Desired Shelf Life *" hint="Expected duration in distribution"
-                tooltip="How long the food product should stay fresh and safe under specified storage.">
+              <Field id="target_shelf_life" label={`${t('analyze.shelfLifeLabel', 'Target Shelf Life (Days)')} *`}>
                 <NumericInput id="target_shelf_life" value={form.target_shelf_life} min={1} max={1000} step={1} unit="days" />
               </Field>
-              <Field id="storage_temperature" label="Storage Temperature" hint="Temperature during storage and retail"
-                tooltip="Ambient is typically 20-25°C, refrigerated is 2-4°C, frozen is -18°C.">
+              <Field id="storage_temperature" label={t('analyze.tempLabel', 'Storage Temperature (°C)')}>
                 <NumericInput id="storage_temperature" value={form.storage_temperature} min={-30} max={60} step={0.5} unit="°C" />
               </Field>
-              <Field id="storage_rh" label="Relative Humidity" hint="Humidity surrounding the packaged product"
-                tooltip="High ambient humidity accelerates moisture ingress for dry items.">
+              <Field id="storage_rh" label={t('analyze.rhLabel', 'Storage Relative Humidity (%)')}>
                 <NumericInput id="storage_rh" value={form.storage_rh} min={10} max={100} step={1} unit="%" />
               </Field>
-              <Field id="storage_type" label="Storage Environment" hint="Primary warehousing condition">
+              <Field id="storage_type" label={t('analyze.storageTypeLabel', 'Storage Mode')}>
                 <select id="storage_type" className="form-control" value={form.storage_type} onChange={e => set('storage_type', e.target.value)}>
-                  <option value="Ambient">Ambient Room Temperature</option>
-                  <option value="Refrigerated">Refrigerated / Chilled (2–4°C)</option>
-                  <option value="Frozen">Frozen (-18°C)</option>
+                  <option value="Ambient">{t('analyze.storageTypes.ambient', 'Ambient (Room Temp)')}</option>
+                  <option value="Refrigerated">{t('analyze.storageTypes.refrigerated', 'Refrigerated (0 - 8°C)')}</option>
+                  <option value="Frozen">{t('analyze.storageTypes.frozen', 'Frozen (-18°C)')}</option>
                   <option value="Controlled Atmosphere">Controlled Atmosphere (CA/MAP)</option>
                 </select>
               </Field>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem' }}>
-              <button type="button" className="btn btn-outline" onClick={() => goBack(2)}>← Back</button>
-              <button type="button" className="btn btn-primary" onClick={() => goNext(4)}>Next: Sensitivities →</button>
+              <button type="button" className="btn btn-outline" onClick={() => goBack(2)}>
+                {t('analyze.prevBtn', '← Previous Step')}
+              </button>
+              <button type="button" className="btn btn-primary" onClick={() => goNext(4)}>
+                {t('analyze.nextBtn', 'Next Step →')}
+              </button>
             </div>
           </div>
 
@@ -298,37 +311,34 @@ export default function AnalyzePage() {
           <div className={`form-step${step === 4 ? ' active' : ''}`}>
             <div className="card-header" style={{ marginBottom: '1.25rem' }}>
               <div>
-                <h2 className="card-title">Step 4: Sensitivities & Preferences</h2>
-                <p className="form-hint">Specify environmental degradation vulnerabilities and scoring priorities.</p>
+                <h2 className="card-title">{t('analyze.step4Title', 'Sensitivities & Preference Profile')}</h2>
+                <p className="form-hint">{t('analyze.step4Desc', 'Specify environmental degradation vulnerabilities and scoring priorities.')}</p>
               </div>
-              <span className="badge badge-neutral">4 of 4</span>
+              <span className="badge badge-neutral">4 / 4</span>
             </div>
             <div className="form-grid">
-              <Field id="oxygen_sensitivity" label="Oxygen Sensitivity" hint="Drives Oxygen Barrier (OTR) requirements"
-                tooltip="High sensitivity demands an excellent gas barrier film.">
+              <Field id="oxygen_sensitivity" label={t('analyze.o2SensitivityLabel', 'Oxygen Sensitivity')}>
                 <select id="oxygen_sensitivity" className="form-control" value={form.oxygen_sensitivity} onChange={e => set('oxygen_sensitivity', e.target.value)}>
-                  <option value="Low">Low — Tolerant to air exposure</option>
-                  <option value="Medium">Medium — Moderate oxidation risk</option>
-                  <option value="High">High — Prone to rapid oxidation</option>
+                  <option value="Low">{t('analyze.sensitivities.low', 'Low')}</option>
+                  <option value="Medium">{t('analyze.sensitivities.medium', 'Medium')}</option>
+                  <option value="High">{t('analyze.sensitivities.high', 'High')}</option>
                 </select>
               </Field>
-              <Field id="moisture_sensitivity" label="Moisture Sensitivity" hint="Drives Water Vapor Barrier (WVTR) requirements"
-                tooltip="High sensitivity protects against soggy snacks or dry-out.">
+              <Field id="moisture_sensitivity" label={t('analyze.moistureSensitivityLabel', 'Moisture Sensitivity')}>
                 <select id="moisture_sensitivity" className="form-control" value={form.moisture_sensitivity} onChange={e => set('moisture_sensitivity', e.target.value)}>
-                  <option value="Low">Low — Moisture changes have low impact</option>
-                  <option value="Medium">Medium — Standard protection needed</option>
-                  <option value="High">High — Very susceptible to humidity</option>
+                  <option value="Low">{t('analyze.sensitivities.low', 'Low')}</option>
+                  <option value="Medium">{t('analyze.sensitivities.medium', 'Medium')}</option>
+                  <option value="High">{t('analyze.sensitivities.high', 'High')}</option>
                 </select>
               </Field>
-              <Field id="light_sensitivity" label="Light Sensitivity" hint="Protection from photo-oxidation"
-                tooltip="Photo-oxidation degrades fats, vitamins, and colors. High sensitivity requires opaque barriers.">
+              <Field id="light_sensitivity" label={t('analyze.lightSensitivityLabel', 'Light Sensitivity')}>
                 <select id="light_sensitivity" className="form-control" value={form.light_sensitivity} onChange={e => set('light_sensitivity', e.target.value)}>
-                  <option value="Low">Low — Transparent packaging suitable</option>
-                  <option value="Medium">Medium — Moderate light protection</option>
-                  <option value="High">High — Requires UV / light-blocking film</option>
+                  <option value="Low">{t('analyze.sensitivities.low', 'Low')}</option>
+                  <option value="Medium">{t('analyze.sensitivities.medium', 'Medium')}</option>
+                  <option value="High">{t('analyze.sensitivities.high', 'High')}</option>
                 </select>
               </Field>
-              <Field id="transport_condition" label="Logistics & Handling" hint="Physical distribution mode">
+              <Field id="transport_condition" label="Logistics & Handling">
                 <select id="transport_condition" className="form-control" value={form.transport_condition} onChange={e => set('transport_condition', e.target.value)}>
                   <option value="Standard Ambient">Standard Ambient Logistics</option>
                   <option value="Cold Chain">Cold Chain Refrigerated</option>
@@ -341,14 +351,13 @@ export default function AnalyzePage() {
             {/* Preference Profile */}
             <div style={{ marginTop: '1.75rem', background: 'var(--primary-surface)', border: '1px solid var(--border-accent)', borderRadius: 'var(--radius-md)', padding: '1.25rem' }}>
               <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, color: 'var(--text-heading)', marginBottom: '0.5rem' }}>
-                🎯 Decision Preference Profile
+                🎯 {t('analyze.profileLabel', 'Optimization Profile')}
               </label>
-              <p className="form-hint" style={{ marginBottom: '1rem' }}>Select how the recommendation engine should weigh competing priorities:</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {[
-                  { value: 'balanced', icon: '⚖️', title: 'Balanced Performance (Recommended)', desc: 'Evenly evaluates gas barrier, shelf life, seal integrity, mechanical strength, cost, and recyclability.' },
-                  { value: 'cost_priority', icon: '💰', title: 'Cost Priority Profile', desc: 'Weights affordability heavily (30%) while preserving mandatory oxygen and moisture safety barriers.' },
-                  { value: 'sustainability_priority', icon: '🌿', title: 'Sustainability Priority Profile', desc: 'Weights recyclability and renewable content heavily (30%) while enforcing barrier protection.' },
+                  { value: 'balanced', icon: '⚖️', title: t('analyze.profileBalanced', 'Balanced Performance (Recommended)') },
+                  { value: 'cost_priority', icon: '💰', title: t('analyze.profileCost', 'Cost Priority Profile') },
+                  { value: 'sustainability_priority', icon: '🌿', title: t('analyze.profileSust', 'Sustainability Priority Profile') },
                 ].map(p => (
                   <label key={p.value} className={`radio-card${form.preference_profile === p.value ? ' selected' : ''}`}
                     onClick={() => set('preference_profile', p.value)}>
@@ -357,7 +366,6 @@ export default function AnalyzePage() {
                       style={{ marginTop: '0.25rem' }} />
                     <div>
                       <strong style={{ color: 'var(--text-heading)', display: 'block', fontSize: '0.92rem' }}>{p.icon} {p.title}</strong>
-                      <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{p.desc}</span>
                     </div>
                   </label>
                 ))}
@@ -365,13 +373,16 @@ export default function AnalyzePage() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem' }}>
-              <button type="button" className="btn btn-outline" onClick={() => goBack(3)}>← Back</button>
+              <button type="button" className="btn btn-outline" onClick={() => goBack(3)}>
+                {t('analyze.prevBtn', '← Previous Step')}
+              </button>
               <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
-                🚀 Analyze Packaging
+                {loading ? t('analyze.evaluatingBtn', 'Evaluating...') : t('analyze.submitBtn', 'Run Full Packaging Analysis 🚀')}
               </button>
             </div>
           </div>
         </form>
+
       </div>
     </div>
   );

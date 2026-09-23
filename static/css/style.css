@@ -4,6 +4,8 @@
    Target Hardware: AMD Ryzen 5 5500U (Lightweight, zero render bloat, pure CSS)
    ========================================================================== */
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap');
+
 :root {
   /* Centralized Color Palette - Light Green Theme */
   --primary-green: #16a34a;       /* Primary Accent (Emerald 600) */
@@ -34,7 +36,7 @@
   --info-bg: #e0f2fe;             /* Sky 100 */
 
   /* Typography */
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: 'Inter', 'Noto Sans Devanagari', 'Noto Sans Tamil', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* Shadows */
@@ -169,6 +171,51 @@ body {
   background-color: var(--light-green);
   color: var(--dark-green);
   font-weight: 600;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.lang-selector-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-full);
+  transition: var(--transition);
+}
+
+.lang-selector-wrapper:focus-within,
+.lang-selector-wrapper:hover {
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.15);
+}
+
+.lang-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.lang-select {
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+}
+
+.lang-select option {
+  background-color: var(--surface);
+  color: var(--text-primary);
 }
 
 .mobile-toggle {
@@ -887,8 +934,16 @@ body {
    Responsive Breakpoints
    ========================================================================== */
 @media (max-width: 768px) {
+  .navbar {
+    flex-wrap: wrap;
+  }
   .nav-links {
     display: none;
+    width: 100%;
+    order: 3;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    margin-top: 0.75rem;
   }
   .mobile-toggle {
     display: block;

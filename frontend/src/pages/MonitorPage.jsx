@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function MonitorPage() {
+  const { t } = useLanguage();
   const [latest, setLatest] = useState(null);
   const [assessment, setAssessment] = useState({});
   const [histories, setHistories] = useState([]);
@@ -78,19 +80,19 @@ export default function MonitorPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
-              <span className="badge badge-green">Live Storage Telemetry</span>
+              <span className="badge badge-green">{t('monitor.badge', 'Live Storage Telemetry')}</span>
               <span className="badge badge-neutral">Device: ESP32</span>
               <span className="badge badge-info">Sensor Observation</span>
             </div>
-            <h1 className="page-title">Storage Condition Monitor</h1>
-            <p className="page-subtitle">Real-time environmental monitoring against packaging analysis assumptions.</p>
+            <h1 className="page-title">{t('monitor.pageTitle', 'Storage Condition Monitor')}</h1>
+            <p className="page-subtitle">{t('monitor.pageSubtitle', 'Real-time environmental monitoring against packaging analysis assumptions.')}</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <label htmlFor="select-analysis" style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Link Analysis:</label>
+              <label htmlFor="select-analysis" style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{t('monitor.linkToAnalysis', 'Link Analysis')}:</label>
               <select id="select-analysis" className="form-control" style={{ fontSize: '0.82rem', padding: '0.35rem 0.6rem', minWidth: 170 }}
                 value={selectedAnalysis} onChange={e => setSelectedAnalysis(e.target.value)}>
-                <option value="">-- All / General --</option>
+                <option value="">{t('monitor.allAnalyses', '-- All / General --')}</option>
                 {analyses.map(a => <option key={a.recommendation_id} value={a.recommendation_id}>#{a.recommendation_id} — {a.food_name}</option>)}
               </select>
             </div>
@@ -114,7 +116,7 @@ export default function MonitorPage() {
           <div style={{ fontSize: '1.5rem' }}>⚠️</div>
           <div>
             <strong style={{ display: 'block', fontSize: '0.92rem' }}>NO RECENT SENSOR DATA</strong>
-            <span style={{ fontSize: '0.82rem' }}>The IoT microcontroller has not transmitted within the last 60 seconds.</span>
+            <span style={{ fontSize: '0.82rem' }}>{t('monitor.offlineNotice', 'The IoT microcontroller has not transmitted within the last 60 seconds.')}</span>
           </div>
         </div>
       )}
@@ -124,7 +126,7 @@ export default function MonitorPage() {
         {/* Temperature */}
         <div className="card" style={{ padding: '1.25rem', borderTop: '4px solid var(--primary)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Temperature</span>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>{t('monitor.tempGauge', 'Temperature')}</span>
             <span style={{ fontSize: '1.2rem' }}>🌡️</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem', marginBottom: '0.25rem' }}>
@@ -137,7 +139,7 @@ export default function MonitorPage() {
         {/* Humidity */}
         <div className="card" style={{ padding: '1.25rem', borderTop: '4px solid #0ea5e9' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Humidity</span>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>{t('monitor.humGauge', 'Humidity')}</span>
             <span style={{ fontSize: '1.2rem' }}>💧</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem', marginBottom: '0.25rem' }}>
@@ -150,7 +152,7 @@ export default function MonitorPage() {
         {/* CO2 */}
         <div className="card" style={{ padding: '1.25rem', borderTop: '4px solid #8b5cf6' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Carbon Dioxide</span>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>{t('monitor.co2Gauge', 'Carbon Dioxide')}</span>
             <span style={{ fontSize: '1.2rem' }}>💨</span>
           </div>
           <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#6d28d9', marginBottom: '0.25rem' }}>
@@ -162,7 +164,7 @@ export default function MonitorPage() {
         {/* Condition State */}
         <div className="card" style={{ padding: '1.25rem', borderTop: `4px solid ${statusColor}` }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Condition</span>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>{t('monitor.liveStatus', 'Condition')}</span>
             <span style={{ fontSize: '1.2rem' }}>{statusIcon}</span>
           </div>
           <div style={{ fontSize: '1.35rem', fontWeight: 800, color: statusColor, marginBottom: '0.25rem' }}>{status}</div>
@@ -171,6 +173,7 @@ export default function MonitorPage() {
           </div>
         </div>
       </div>
+
 
       {/* Baseline Comparison */}
       <div className="card card-accent" style={{ marginBottom: '2rem', padding: '1.5rem' }}>

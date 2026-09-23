@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function ReportPage() {
   const [searchParams] = useSearchParams();
   const [data, setData] = useState(null);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const loadReport = async () => {
@@ -55,14 +57,15 @@ export default function ReportPage() {
   if (!data) return (
     <div className="page-enter" style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center', padding: '4rem 1rem' }}>
       <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📄</div>
-      <h1 className="page-title">No Report Data</h1>
-      <p className="page-subtitle" style={{ margin: '0 auto 2rem' }}>Run an analysis or select a history item to generate a printable report.</p>
+      <h1 className="page-title">{t('report.noReportTitle', 'No Report Data')}</h1>
+      <p className="page-subtitle" style={{ margin: '0 auto 2rem' }}>{t('report.noReportDesc', 'Run an analysis or select a history item to generate a printable report.')}</p>
       <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
-        <Link to="/analyze" className="btn btn-primary">🚀 Start Analysis</Link>
-        <Link to="/history" className="btn btn-secondary">📋 View History</Link>
+        <Link to="/analyze" className="btn btn-primary">{t('results.startAnalysisBtn', '🚀 Start Analysis')}</Link>
+        <Link to="/history" className="btn btn-secondary">{t('nav.history', '📋 View History')}</Link>
       </div>
     </div>
   );
+
 
   const a = data.analysis || {};
   const recs = data.recommendations || {};
@@ -100,10 +103,10 @@ export default function ReportPage() {
       {/* Toolbar */}
       <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <Link to="/results" className="btn btn-secondary btn-sm">← Back to Results</Link>
-          <Link to="/history" className="btn btn-outline btn-sm">Audit History</Link>
+          <Link to="/results" className="btn btn-secondary btn-sm">{t('report.backBtn', '← Back to Results')}</Link>
+          <Link to="/history" className="btn btn-outline btn-sm">{t('nav.history', 'Audit History')}</Link>
         </div>
-        <button onClick={() => window.print()} className="btn btn-primary">🖨️ Print / Save PDF</button>
+        <button onClick={() => window.print()} className="btn btn-primary">{t('report.printBtn', '🖨️ Print / Save PDF')}</button>
       </div>
 
       {/* Report Document */}
@@ -113,8 +116,8 @@ export default function ReportPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '1.25rem', borderBottom: '2px solid var(--primary)', marginBottom: '1.5rem' }}>
           <div>
             <span className="badge badge-green" style={{ marginBottom: '0.35rem' }}>Official Audit Record</span>
-            <h1 style={{ fontSize: '1.65rem', color: 'var(--text-heading)', fontWeight: 800, margin: '0.25rem 0' }}>SMART FOOD PACKAGING REPORT</h1>
-            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0 }}>Multi-Attribute Decision Intelligence & Hybrid Rule-ML Assessment</p>
+            <h1 style={{ fontSize: '1.65rem', color: 'var(--text-heading)', fontWeight: 800, margin: '0.25rem 0' }}>{t('report.pageTitle', 'SMART FOOD PACKAGING REPORT')}</h1>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0 }}>{t('report.pageSubtitle', 'Multi-Attribute Decision Intelligence & Hybrid Rule-ML Assessment')}</p>
           </div>
           <div style={{ textAlign: 'right' }}>
             <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Analysis ID</span>
@@ -125,7 +128,8 @@ export default function ReportPage() {
 
         {/* Executive Summary */}
         <div style={{ marginBottom: '1.75rem', background: 'var(--primary-surface)', borderRadius: 'var(--radius-md)', padding: '1.25rem', border: '1px solid var(--border-accent)' }}>
-          <h2 style={{ fontSize: '0.92rem', color: 'var(--text-heading)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 0.5rem 0' }}>Executive Summary</h2>
+          <h2 style={{ fontSize: '0.92rem', color: 'var(--text-heading)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 0.5rem 0' }}>{t('report.sections.executiveSummary', '1. Executive Summary')}</h2>
+
           <p style={{ fontSize: '0.88rem', color: 'var(--text-primary)', margin: 0 }}>
             For {a.food || 'the evaluated food'} stored under {a.storage_type || 'ambient'} conditions ({a.storage_temperature ?? 20}°C, {a.storage_rh ?? 60}% RH) requiring a {a.target_shelf_life || 30}-day shelf-life, <strong>{m.material_name || 'the recommended material'}</strong> is the optimal packaging solution with a compatibility score of {score}%.
           </p>

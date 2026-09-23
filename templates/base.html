@@ -18,25 +18,36 @@
       <a href="/home" class="brand" aria-label="Smart Food Packaging Home">
         <div class="brand-icon" aria-hidden="true">🌱</div>
         <div>
-          <span class="brand-title">Smart Food Packaging</span>
-          <span class="brand-tagline">AI & Rule-Based Material Selection</span>
+          <span class="brand-title" data-i18n="nav.title">Smart Food Packaging</span>
+          <span class="brand-tagline" data-i18n="nav.subtitle">AI & Rule-Based Material Selection</span>
         </div>
       </a>
 
-      <button class="mobile-toggle" id="mobile-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Toggle menu">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <line x1="3" y1="12" x2="21" y2="12"></line>
-          <line x1="3" y1="6" x2="21" y2="6"></line>
-          <line x1="3" y1="18" x2="21" y2="18"></line>
-        </svg>
-      </button>
+      <div class="nav-actions">
+        <div class="lang-selector-wrapper">
+          <span class="lang-icon" aria-hidden="true">🌐</span>
+          <select id="lang-select" class="lang-select" aria-label="Select Language">
+            <option value="en">English</option>
+            <option value="hi">हिन्दी</option>
+            <option value="ta">தமிழ்</option>
+          </select>
+        </div>
+
+        <button class="mobile-toggle" id="mobile-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Toggle menu">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+      </div>
 
       <ul class="nav-links" id="nav-menu" role="menubar">
-        <li role="none"><a href="/home" role="menuitem" class="nav-link {% if request.path == '/' or request.path == '/home' %}active{% endif %}">Home</a></li>
-        <li role="none"><a href="/analyze" role="menuitem" class="nav-link {% if request.path == '/analyze' %}active{% endif %}">Analyze</a></li>
-        <li role="none"><a href="/compare" role="menuitem" class="nav-link {% if request.path == '/compare' %}active{% endif %}">Materials</a></li>
-        <li role="none"><a href="/history" role="menuitem" class="nav-link {% if request.path == '/history' %}active{% endif %}">History</a></li>
-        <li role="none"><a href="/monitor" role="menuitem" class="nav-link {% if request.path == '/monitor' %}active{% endif %}">Monitor</a></li>
+        <li role="none"><a href="/home" role="menuitem" class="nav-link {% if request.path == '/' or request.path == '/home' %}active{% endif %}" data-i18n="nav.home">Home</a></li>
+        <li role="none"><a href="/analyze" role="menuitem" class="nav-link {% if request.path == '/analyze' %}active{% endif %}" data-i18n="nav.analyze">Analyze</a></li>
+        <li role="none"><a href="/compare" role="menuitem" class="nav-link {% if request.path == '/compare' %}active{% endif %}" data-i18n="nav.materials">Materials</a></li>
+        <li role="none"><a href="/history" role="menuitem" class="nav-link {% if request.path == '/history' %}active{% endif %}" data-i18n="nav.history">History</a></li>
+        <li role="none"><a href="/monitor" role="menuitem" class="nav-link {% if request.path == '/monitor' %}active{% endif %}" data-i18n="nav.monitor">Monitor</a></li>
       </ul>
     </nav>
   </header>
@@ -50,17 +61,17 @@
   <div id="loading-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="loading-title">
     <div class="modal-card">
       <div style="font-size: 2.2rem; margin-bottom: 0.5rem;" aria-hidden="true">🔬</div>
-      <h2 id="loading-title" style="font-size: 1.3rem; color: var(--dark-green); margin-bottom: 0.5rem;">Analyzing Your Food...</h2>
-      <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+      <h2 id="loading-title" style="font-size: 1.3rem; color: var(--dark-green); margin-bottom: 0.5rem;" data-i18n="modal.title">Analyzing Your Food...</h2>
+      <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1.25rem;" data-i18n="modal.subtitle">
         Matching food properties with barrier requirements and domain safety rules.
       </p>
       <ul class="progress-steps-list" id="progress-steps">
-        <li class="progress-step-item" id="p-step-1"><span>○</span> Checking food characteristics</li>
-        <li class="progress-step-item" id="p-step-2"><span>○</span> Checking storage requirements</li>
-        <li class="progress-step-item" id="p-step-3"><span>○</span> Filtering unsuitable materials with safety rules</li>
-        <li class="progress-step-item" id="p-step-4"><span>○</span> Machine-learning candidate assessment</li>
-        <li class="progress-step-item" id="p-step-5"><span>○</span> Evaluating packaging compatibility</li>
-        <li class="progress-step-item" id="p-step-6"><span>○</span> Preparing your recommendation</li>
+        <li class="progress-step-item" id="p-step-1"><span>○</span> <span data-i18n="modal.step1">Checking food characteristics</span></li>
+        <li class="progress-step-item" id="p-step-2"><span>○</span> <span data-i18n="modal.step2">Checking storage requirements</span></li>
+        <li class="progress-step-item" id="p-step-3"><span>○</span> <span data-i18n="modal.step3">Filtering unsuitable materials with safety rules</span></li>
+        <li class="progress-step-item" id="p-step-4"><span>○</span> <span data-i18n="modal.step4">Machine-learning candidate assessment</span></li>
+        <li class="progress-step-item" id="p-step-5"><span>○</span> <span data-i18n="modal.step5">Evaluating packaging compatibility</span></li>
+        <li class="progress-step-item" id="p-step-6"><span>○</span> <span data-i18n="modal.step6">Preparing your recommendation</span></li>
       </ul>
     </div>
   </div>
@@ -72,17 +83,18 @@
   <footer class="site-footer">
     <div class="footer-inner">
       <div>
-        <strong style="color: var(--dark-green);">🌱 Smart Food Packaging Recommendation System</strong>
-        <p style="font-size: 0.8rem; margin-top: 0.25rem;">
+        <strong style="color: var(--dark-green);" data-i18n="footer.brand">🌱 Smart Food Packaging Recommendation System</strong>
+        <p style="font-size: 0.8rem; margin-top: 0.25rem;" data-i18n="footer.desc">
           Lightweight CPU architecture running on AMD Ryzen 5 5500U. Domain rules + Scikit-Learn Random Forest.
         </p>
       </div>
       <div style="font-size: 0.8rem;">
-        <span>Decision-support prototype for food technology and sustainable packaging education. Phase 8 — Final Release.</span>
+        <span data-i18n="footer.phase">Decision-support prototype for food technology and sustainable packaging education. Phase 8 — Final Release.</span>
       </div>
     </div>
   </footer>
 
+  <script src="{{ url_for('static', filename='js/translations.js') }}"></script>
   <script src="{{ url_for('static', filename='js/api.js') }}"></script>
   <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
   {% block scripts %}{% endblock %}

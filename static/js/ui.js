@@ -35,12 +35,12 @@ const UI = {
   async simulateAnalysisProgress(callback) {
     const modal = document.getElementById("loading-modal");
     const steps = [
-      { id: "p-step-1", text: "Checking food characteristics" },
-      { id: "p-step-2", text: "Checking storage requirements" },
-      { id: "p-step-3", text: "Filtering unsuitable materials with safety rules" },
-      { id: "p-step-4", text: "Machine-learning candidate assessment" },
-      { id: "p-step-5", text: "Evaluating packaging compatibility" },
-      { id: "p-step-6", text: "Preparing your recommendation" },
+      { id: "p-step-1", key: "modal.step1", text: "Checking food characteristics" },
+      { id: "p-step-2", key: "modal.step2", text: "Checking storage requirements" },
+      { id: "p-step-3", key: "modal.step3", text: "Filtering unsuitable materials with safety rules" },
+      { id: "p-step-4", key: "modal.step4", text: "Machine-learning candidate assessment" },
+      { id: "p-step-5", key: "modal.step5", text: "Evaluating packaging compatibility" },
+      { id: "p-step-6", key: "modal.step6", text: "Preparing your recommendation" },
     ];
 
     if (!modal) {
@@ -48,12 +48,14 @@ const UI = {
       return;
     }
 
+    const getText = (s) => (window.I18N ? window.I18N.t(s.key, s.text) : s.text);
+
     // Reset steps
     steps.forEach(s => {
       const el = document.getElementById(s.id);
       if (el) {
         el.className = "progress-step-item";
-        el.innerHTML = `<span>○</span> ${s.text}`;
+        el.innerHTML = `<span>○</span> ${getText(s)}`;
       }
     });
 
@@ -61,14 +63,15 @@ const UI = {
 
     for (let i = 0; i < steps.length; i++) {
       const el = document.getElementById(steps[i].id);
+      const text = getText(steps[i]);
       if (el) {
         el.className = "progress-step-item active";
-        el.innerHTML = `<span>◐</span> ${steps[i].text}`;
+        el.innerHTML = `<span>◐</span> ${text}`;
       }
       await new Promise(r => setTimeout(r, 120));
       if (el) {
         el.className = "progress-step-item done";
-        el.innerHTML = `<span style="color: var(--primary-green); font-weight: bold;">✓</span> ${steps[i].text}`;
+        el.innerHTML = `<span style="color: var(--primary-green); font-weight: bold;">✓</span> ${text}`;
       }
     }
 
@@ -85,9 +88,11 @@ const UI = {
   getProvenanceBadge(source) {
     const isSynthetic = (source || "").toUpperCase().includes("SYNTHETIC");
     if (isSynthetic) {
-      return '<span class="badge badge-warning">Synthetic Demonstration Data</span>';
+      const label = window.I18N ? window.I18N.t("compare.syntheticBadge", "Synthetic Demonstration Data") : "Synthetic Demonstration Data";
+      return `<span class="badge badge-warning">${label}</span>`;
     }
-    return '<span class="badge badge-green">Literature-Backed</span>';
+    const label = window.I18N ? window.I18N.t("compare.litBadge", "Literature-Backed") : "Literature-Backed";
+    return `<span class="badge badge-green">${label}</span>`;
   },
 
   /**

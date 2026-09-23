@@ -1,15 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function LoadingModal({ active, onComplete }) {
-  const [steps, setSteps] = useState([
-    { id: 1, text: 'Checking food characteristics', status: 'pending' },
-    { id: 2, text: 'Checking storage requirements', status: 'pending' },
-    { id: 3, text: 'Filtering unsuitable materials with safety rules', status: 'pending' },
-    { id: 4, text: 'Machine-learning candidate assessment', status: 'pending' },
-    { id: 5, text: 'Evaluating packaging compatibility', status: 'pending' },
-    { id: 6, text: 'Preparing your recommendation', status: 'pending' },
-  ]);
+  const { t } = useLanguage();
+  const [currentStepIdx, setCurrentStepIdx] = useState(-1);
   const running = useRef(false);
+
+  const stepKeys = [
+    'modal.step1',
+    'modal.step2',
+    'modal.step3',
+    'modal.step4',
+    'modal.step5',
+    'modal.step6',
+  ];
 
   useEffect(() => {
     if (!active || running.current) return;
@@ -17,16 +21,15 @@ export default function LoadingModal({ active, onComplete }) {
 
     const runSteps = async () => {
       for (let i = 0; i < 6; i++) {
-        setSteps(prev => prev.map((s, idx) => idx === i ? { ...s, status: 'active' } : s));
+        setCurrentStepIdx(i);
         await new Promise(r => setTimeout(r, 150));
-        setSteps(prev => prev.map((s, idx) => idx === i ? { ...s, status: 'done' } : s));
       }
+      setCurrentStepIdx(6);
       if (onComplete) await onComplete();
       running.current = false;
     };
 
-    // Reset all steps
-    setSteps(prev => prev.map(s => ({ ...s, status: 'pending' })));
+    setCurrentStepIdx(-1);
     runSteps();
   }, [active]);
 
@@ -39,22 +42,26 @@ export default function LoadingModal({ active, onComplete }) {
       <div className="modal-card">
         <div style={{ fontSize: '2.2rem', marginBottom: '0.5rem' }}>🔬</div>
         <h2 style={{ fontSize: '1.3rem', color: 'var(--text-heading)', marginBottom: '0.5rem', fontWeight: 700 }}>
-          Analyzing Your Food...
+          {t('modal.title', 'Analyzing Your Food...')}
         </h2>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
-          Matching food properties with barrier requirements and domain safety rules.
+          {t('modal.subtitle', 'Matching food properties with barrier requirements and domain safety rules.')}
         </p>
         <ul className="progress-steps-list">
-          {steps.map(s => (
-            <li key={s.id} className={`progress-step-item ${s.status}`}>
-              <span style={s.status === 'done' ? { color: 'var(--primary)', fontWeight: 'bold' } : {}}>
-                {icons[s.status]}
-              </span>
-              {s.text}
-            </li>
-          ))}
+          {stepKeys.map((key, idx) => {
+            const status = currentStepIdx > idx ? 'done' : currentStepIdx === idx ? 'active' : 'pending';
+            return (
+              <li key={idx} className={`progress-step-item ${status}`}>
+                <span style={status === 'done' ? { color: 'var(--primary)', fontWeight: 'bold' } : {}}>
+                  {icons[status]}
+                </span>
+                {t(key, '')}
+              </li>
+            );
+          })}
         </ul>
       </div>
     </div>
   );
 }
+

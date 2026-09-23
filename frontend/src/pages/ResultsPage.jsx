@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '../components/Layout';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function ResultsPage() {
   const [data, setData] = useState(null);
   const [techOpen, setTechOpen] = useState(false);
   const showToast = useToast();
+  const { t } = useLanguage();
 
   useEffect(() => {
     const raw = sessionStorage.getItem('last_packaging_result');
@@ -15,9 +17,9 @@ export default function ResultsPage() {
   if (!data) return (
     <div className="page-enter" style={{ maxWidth: 920, margin: '0 auto', textAlign: 'center', padding: '4rem 1rem' }}>
       <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📦</div>
-      <h1 className="page-title">No Results Available</h1>
-      <p className="page-subtitle" style={{ margin: '0 auto 2rem' }}>Run an analysis first to see packaging recommendations.</p>
-      <Link to="/analyze" className="btn btn-primary btn-lg">🚀 Start Analysis</Link>
+      <h1 className="page-title">{t('results.noResultsTitle', 'No Results Available')}</h1>
+      <p className="page-subtitle" style={{ margin: '0 auto 2rem' }}>{t('results.noResultsDesc', 'Run an analysis first to see packaging recommendations.')}</p>
+      <Link to="/analyze" className="btn btn-primary btn-lg">{t('results.startAnalysisBtn', '🚀 Start Analysis')}</Link>
     </div>
   );
 
@@ -34,22 +36,23 @@ export default function ResultsPage() {
   const factors = primary.key_factors || [];
   const rules = primary.triggered_rules || [];
   const altKeys = [
-    { key: 'alternative_match', title: 'Alternative Match', icon: '🔄' },
-    { key: 'lower_cost_alternative', title: 'Lower-Cost', icon: '💰' },
-    { key: 'sustainability_oriented_alternative', title: 'Sustainability', icon: '🌿' },
+    { key: 'alternative_match', title: t('results.altTabs.altMatch', 'Alternative Match'), icon: '🔄' },
+    { key: 'lower_cost_alternative', title: t('results.altTabs.lowerCost', 'Lower-Cost Alternative'), icon: '💰' },
+    { key: 'sustainability_oriented_alternative', title: t('results.altTabs.sustainability', 'Sustainability Alternative'), icon: '🌿' },
   ];
   const profileName = (a.preference_profile || 'balanced').replace(/_/g, ' ');
   const score = parseFloat(primary.compatibility_score || 0).toFixed(1);
 
   const scoreItems = [
-    { label: 'Oxygen Barrier', val: sub.oxygen },
-    { label: 'Moisture Barrier', val: sub.moisture },
-    { label: 'Shelf Life', val: sub.shelf_life },
-    { label: 'Mechanical', val: sub.mechanical },
-    { label: 'Sealability', val: sub.sealability },
-    { label: 'Sustainability', val: sub.sustainability },
-    { label: 'Cost', val: sub.cost },
+    { label: t('results.subscores.oxygen', 'Oxygen Barrier'), val: sub.oxygen },
+    { label: t('results.subscores.moisture', 'Moisture Barrier'), val: sub.moisture },
+    { label: t('results.subscores.shelfLife', 'Shelf Life'), val: sub.shelf_life },
+    { label: t('results.subscores.mechanical', 'Mechanical Strength'), val: sub.mechanical },
+    { label: t('results.subscores.sealability', 'Seal Integrity'), val: sub.sealability },
+    { label: t('results.subscores.sustainability', 'Sustainability'), val: sub.sustainability },
+    { label: t('results.subscores.cost', 'Cost Efficiency'), val: sub.cost },
   ];
+
 
   const profiles = data.cross_profile_comparison || data.profile_comparison || [];
 
@@ -60,16 +63,16 @@ export default function ResultsPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-              <span className="badge badge-green">Analysis Complete</span>
-              <span className="badge badge-neutral">Profile: {profileName}</span>
-              <span className="badge badge-info">{(m.source || '').toUpperCase().includes('SYNTHETIC') ? 'Synthetic Data' : 'Literature-Backed'}</span>
+              <span className="badge badge-green">{t('results.badgeComplete', 'Analysis Complete')}</span>
+              <span className="badge badge-neutral">{t('results.profile', 'Profile')}: {profileName}</span>
+              <span className="badge badge-info">{(m.source || '').toUpperCase().includes('SYNTHETIC') ? t('results.syntheticData', 'Synthetic Data') : t('results.literatureBacked', 'Literature-Backed')}</span>
             </div>
-            <h1 className="page-title">Recommendation Results</h1>
-            <p className="page-subtitle">Evaluating optimal packaging materials for <strong>{a.food || 'your food product'}</strong>.</p>
+            <h1 className="page-title">{t('results.pageTitle', 'Recommendation Results')}</h1>
+            <p className="page-subtitle">{t('results.pageSubtitle', 'Evaluating optimal packaging materials for')} <strong>{a.food || 'your food product'}</strong>.</p>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <Link to="/report" className="btn btn-secondary btn-sm">📄 Printable Report</Link>
-            <Link to="/analyze" className="btn btn-outline btn-sm">🔄 New Analysis</Link>
+            <Link to="/report" className="btn btn-secondary btn-sm">{t('results.printableReport', '📄 Printable Report')}</Link>
+            <Link to="/analyze" className="btn btn-outline btn-sm">{t('results.newAnalysis', '🔄 New Analysis')}</Link>
           </div>
         </div>
       </div>
@@ -77,15 +80,15 @@ export default function ResultsPage() {
       {/* Key Requirements */}
       <section className="card card-surface" style={{ marginBottom: '1.75rem', padding: '1.25rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <h2 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-heading)', margin: 0 }}>🎯 Key Packaging Requirements</h2>
-          <span className="badge badge-green">Target: {a.target_shelf_life || 30} Days</span>
+          <h2 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-heading)', margin: 0 }}>{t('results.keyRequirements', '🎯 Key Packaging Requirements')}</h2>
+          <span className="badge badge-green">{t('results.targetShelfLife', 'Target')}: {a.target_shelf_life || 30} {t('results.days', 'Days')}</span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
           {[
-            { label: 'Oxygen Barrier Demand', val: pkg.critical_o2_barrier_needed || 'Standard' },
-            { label: 'Moisture Vapor Demand', val: pkg.critical_wvtr_barrier_needed || 'Standard' },
-            { label: 'Mechanical Protection', val: pkg.mechanical_protection_demand || 'Standard' },
-            { label: 'Gas Exchange', val: pkg.gas_exchange_demand || 'Hermetic Seal' },
+            { label: t('results.o2Demand', 'Oxygen Barrier Demand'), val: pkg.critical_o2_barrier_needed || 'Standard' },
+            { label: t('results.wvtrDemand', 'Moisture Vapor Demand'), val: pkg.critical_wvtr_barrier_needed || 'Standard' },
+            { label: t('results.mechDemand', 'Mechanical Protection'), val: pkg.mechanical_protection_demand || 'Standard' },
+            { label: t('results.gasExchange', 'Gas Exchange'), val: pkg.gas_exchange_demand || 'Hermetic Seal' },
           ].map((r, i) => (
             <div key={i} style={{ background: 'var(--bg-surface)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-accent)' }}>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.03em' }}>{r.label}</span>
@@ -101,21 +104,21 @@ export default function ResultsPage() {
         <div className="match-header">
           <div>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.5rem' }}>
-              <span className="badge badge-green">🌟 #1 RECOMMENDED MATCH</span>
+              <span className="badge badge-green">🌟 {t('results.recommendedMatch', '#1 RECOMMENDED MATCH')}</span>
             </div>
             <h2 className="match-name">{m.material_name || 'Loading...'}</h2>
             <span className="badge badge-neutral" style={{ marginTop: '0.4rem' }}>{m.material_category || 'Category'}</span>
           </div>
           <div className="match-score-badge">
             <div className="match-score-num">{score}%</div>
-            <div className="match-score-label">Compatibility Score</div>
+            <div className="match-score-label">{t('results.compatibilityScore', 'Compatibility Score')}</div>
           </div>
         </div>
 
         {/* Why */}
         {reasons.length > 0 && (
           <div style={{ background: 'var(--primary-surface)', borderRadius: 'var(--radius-md)', padding: '1.25rem', border: '1px solid var(--border-accent)', marginBottom: '1.5rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-heading)', marginBottom: '0.75rem' }}>Why did the system recommend this?</h3>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-heading)', marginBottom: '0.75rem' }}>{t('results.whyThisMatches', 'Why did the system recommend this?')}</h3>
             <ul className="reasons-list">
               {reasons.map((r, i) => (
                 <li key={i} className="reason-item fade-in-up" style={{ animationDelay: `${i * 0.05}s` }}>
@@ -135,6 +138,7 @@ export default function ResultsPage() {
               <span className="badge badge-neutral">{cost.cost_tier || 'Moderate'}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginBottom: '0.25rem' }}>
+
               <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-heading)' }}>
                 ${(cost.unit_package_cost_usd ?? (m.estimated_cost || 0) * 0.05).toFixed(4)}
               </span>
@@ -193,7 +197,7 @@ export default function ResultsPage() {
 
         {/* Score Breakdown */}
         <div style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-heading)', marginBottom: '0.75rem' }}>Compatibility Breakdown by Criterion</h3>
+          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-heading)', marginBottom: '0.75rem' }}>{t('results.criteriaBreakdown', 'Multi-Attribute Score Breakdown')}</h3>
           <div className="score-breakdown-grid">
             {scoreItems.map((s, i) => (
               <div key={i} className="score-bar-item">
@@ -250,10 +254,10 @@ export default function ResultsPage() {
       {profiles.length > 0 && (
         <section className="card" style={{ marginBottom: '2.5rem', padding: '1.5rem', borderTop: '3px solid var(--primary)' }}>
           <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-heading)', marginBottom: '0.25rem' }}>
-            🔄 Cross-Profile Comparison
+            🔄 {t('results.crossProfileTitle', 'Cross-Profile Comparison Matrix')}
           </h2>
           <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-            See how the top-ranked packaging changes depending on organizational objectives:
+            {t('results.crossProfileSubtitle', 'How recommendations adjust under different business priorities while preserving barrier safety:')}
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
             {profiles.map((p, i) => (
@@ -270,15 +274,13 @@ export default function ResultsPage() {
       {/* Alternatives */}
       <section style={{ marginBottom: '2.5rem' }}>
         <h2 style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--text-heading)', marginBottom: '0.5rem' }}>
-          Alternative Packaging Materials
+          {t('results.alternativesTitle', 'Alternative Packaging Matches')}
         </h2>
-        <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
-          Depending on your budget or sustainability targets, here are viable alternatives:
-        </p>
         <div className="alternatives-grid">
           {altKeys.map(({ key, title, icon }) => {
             const alt = recs[key];
             if (!alt || !alt.material) return null;
+
             return (
               <div key={key} className="alternative-card">
                 <div>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 
 /* ── Toast Context ── */
 const ToastContext = createContext(null);
@@ -13,6 +14,7 @@ let toastId = 0;
 
 export default function Layout() {
   const location = useLocation();
+  const { lang, setLang, t, languages } = useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [toasts, setToasts] = useState([]);
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
@@ -36,26 +38,26 @@ export default function Layout() {
   }, []);
 
   const navItems = [
-    { to: '/home', label: 'Home' },
-    { to: '/analyze', label: 'Analyze' },
-    { to: '/compare', label: 'Materials' },
-    { to: '/history', label: 'History' },
-    { to: '/monitor', label: 'Monitor' },
+    { to: '/home', label: t('nav.home', 'Home') },
+    { to: '/analyze', label: t('nav.analyze', 'Analyze') },
+    { to: '/compare', label: t('nav.materials', 'Materials') },
+    { to: '/history', label: t('nav.history', 'History') },
+    { to: '/monitor', label: t('nav.monitor', 'Monitor') },
   ];
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
     <ToastContext.Provider value={showToast}>
-      <a href="#main-content" className="skip-link">Skip to main content</a>
+      <a href="#main-content" className="skip-link">{t('nav.skipToContent', 'Skip to main content')}</a>
 
       {/* ── Navbar ── */}
       <header className="navbar" role="banner">
         <nav className="navbar-inner" aria-label="Main Navigation">
-          <NavLink to="/home" className="brand" aria-label="Smart Food Packaging Home">
+          <NavLink to="/home" className="brand" aria-label={t('nav.brandTitle', 'Smart Food Packaging')}>
             <div className="brand-icon" aria-hidden="true">🌱</div>
             <div>
-              <span className="brand-title">Smart Food Packaging</span>
-              <span className="brand-tagline">AI & Rule-Based Material Selection</span>
+              <span className="brand-title">{t('nav.brandTitle', 'Smart Food Packaging')}</span>
+              <span className="brand-tagline">{t('nav.brandTagline', 'AI & Rule-Based Material Selection')}</span>
             </div>
           </NavLink>
 
@@ -71,15 +73,49 @@ export default function Layout() {
                 </NavLink>
               </li>
             ))}
+            
+            {/* Language Switcher */}
+            <li role="none" className="lang-switcher-item">
+              <div className="lang-dropdown-wrapper">
+                <select
+                  value={lang}
+                  onChange={(e) => setLang(e.target.value)}
+                  className="lang-select-input"
+                  aria-label={t('nav.toggleLang', 'Select Language')}
+                  title={t('nav.toggleLang', 'Select Language')}
+                >
+                  {languages.map(l => (
+                    <option key={l.code} value={l.code}>
+                      {l.flag} {l.native}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </li>
+
             <li role="none">
-              <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle theme" title="Toggle dark mode">
+              <button className="theme-toggle" onClick={toggleTheme} aria-label={t('nav.toggleTheme', 'Toggle theme')} title={t('nav.toggleTheme', 'Toggle dark mode')}>
                 {theme === 'dark' ? '☀️' : '🌙'}
               </button>
             </li>
           </ul>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle theme" style={{ display: 'none' }}>
+            <div className="mobile-lang-wrapper" style={{ display: 'none' }}>
+              <select
+                value={lang}
+                onChange={(e) => setLang(e.target.value)}
+                className="lang-select-input"
+                aria-label={t('nav.toggleLang', 'Select Language')}
+              >
+                {languages.map(l => (
+                  <option key={l.code} value={l.code}>
+                    {l.flag} {l.native}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button className="theme-toggle" onClick={toggleTheme} aria-label={t('nav.toggleTheme', 'Toggle theme')} style={{ display: 'none' }}>
               {theme === 'dark' ? '☀️' : '🌙'}
             </button>
             <button
@@ -120,9 +156,28 @@ export default function Layout() {
             {item.label}
           </NavLink>
         ))}
-        <button className="theme-toggle" onClick={toggleTheme} style={{ marginTop: '1rem' }}>
-          {theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode'}
-        </button>
+
+        <div style={{ marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>🌐 {t('nav.toggleLang', 'Language')}:</span>
+            <select
+              value={lang}
+              onChange={(e) => setLang(e.target.value)}
+              className="lang-select-input"
+              style={{ flex: 1 }}
+              aria-label={t('nav.toggleLang', 'Select Language')}
+            >
+              {languages.map(l => (
+                <option key={l.code} value={l.code}>
+                  {l.flag} {l.native} ({l.name})
+                </option>
+              ))}
+            </select>
+          </div>
+          <button className="theme-toggle" onClick={toggleTheme} style={{ width: '100%', justifyContent: 'center' }}>
+            {theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode'}
+          </button>
+        </div>
       </div>
 
       {/* ── Main ── */}
@@ -134,13 +189,13 @@ export default function Layout() {
       <footer className="site-footer">
         <div className="footer-inner">
           <div>
-            <strong style={{ color: 'var(--text-heading)' }}>🌱 Smart Food Packaging Recommendation System</strong>
+            <strong style={{ color: 'var(--text-heading)' }}>🌱 {t('footer.brand', 'Smart Food Packaging Recommendation System')}</strong>
             <p style={{ fontSize: '0.78rem', marginTop: '0.2rem', color: 'var(--text-muted)' }}>
-              Lightweight CPU architecture running on AMD Ryzen 5 5500U. Domain rules + Scikit-Learn Random Forest.
+              {t('footer.architecture', 'Lightweight CPU architecture running on AMD Ryzen 5 5500U. Domain rules + Scikit-Learn Random Forest.')}
             </p>
           </div>
           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-            Decision-support prototype for food technology and sustainable packaging education.
+            {t('footer.disclaimer', 'Decision-support prototype for food technology and sustainable packaging education.')}
           </div>
         </div>
       </footer>
@@ -157,3 +212,4 @@ export default function Layout() {
     </ThemeContext.Provider>
   );
 }
+
